@@ -1,0 +1,89 @@
+<strings>
+    <string id="AppName">AAPS</string>
+
+    <!-- English is the default; the watch picks resources-dan when its language is Danish. -->
+    <string id="TempTarget">Temp target</string>
+    <string id="Scenes">Scenes</string>
+    <string id="QuickWizard">Quick Wizard</string>
+    <string id="BolusWizard">Bolus wizard</string>
+    <string id="Treatment">Treatment</string>
+    <string id="StopBolus">Stop bolus</string>
+
+    <string id="Activity">Activity</string>
+    <string id="EatingSoon">Eating soon</string>
+    <string id="Hypo">Hypo</string>
+    <string id="CancelTt">Cancel TT</string>
+    <!-- Manual temp target: the user picks target and duration. -->
+    <string id="ManualTt">Manual</string>
+    <string id="Target">Target</string>
+    <string id="Duration">Duration</string>
+
+    <string id="Loading">Loading...</string>
+    <string id="Sending">Sending...</string>
+    <string id="ConfirmStart">START = confirm</string>
+    <string id="ConfirmBack">BACK = cancel</string>
+    <string id="Expired">Expired</string>
+
+    <!-- $1$ is the scene name from AAPS. -->
+    <string id="EndScene">End $1$</string>
+    <string id="EndSceneQ">End scene $1$?</string>
+    <!-- Stands in for the name when /status could not be read. -->
+    <string id="Scene">scene</string>
+    <string id="NoScenes">No scenes</string>
+
+    <string id="NoQw">No active Quick Wizard</string>
+    <string id="Carbs">Carbs</string>
+    <!-- $1$ is one step: "5 g", or the pump's insulin step from AAPS ("0.05 U"). -->
+    <string id="AmountHint">UP/DOWN = $1$</string>
+    <string id="CarbsNext">START = next</string>
+    <!-- Treatment: insulin is shown with two decimals; DecimalSep is the decimal
+         mark between them (drawn by hand in the number, since that font has no comma). -->
+    <string id="Insulin">Insulin</string>
+    <string id="InsulinUnit">U</string>
+    <string id="DecimalSep">.</string>
+    <!-- Shown on the treatment carbs screen when both amounts are 0. -->
+    <string id="ChooseAmount">Choose insulin or carbs</string>
+    <!-- Meal types; the sub lines say how AAPS splits the carbs. -->
+    <string id="Bread">Bread</string>
+    <string id="BreadSub">100 % now</string>
+    <string id="Cake">Cake</string>
+    <string id="CakeSub">90 % + 20 % later</string>
+    <string id="Pizza">Pizza</string>
+    <string id="PizzaSub">80 % + 35 % later</string>
+    <!-- Bolus wizard after the meal type: minutes until the meal, as in AAPS. -->
+    <string id="CarbTime">Carb time</string>
+    <string id="CarbTimeSub">+ = eat later</string>
+    <string id="Percentage">Percentage</string>
+    <string id="HoldStart">Hold START 2 s</string>
+    <string id="StopQuestion">Stop bolus?</string>
+    <string id="StopStart">START = stop</string>
+    <!-- Shown until BACK when a bolus commit got no clear answer: it may have been given.
+         The code is appended on a new line in BolusFlow.mc. -->
+    <string id="UnknownBolus">Unknown – do NOT repeat, check AAPS</string>
+
+    <!-- 401 and 403 name the control key, which is set in the main menu. -->
+    <string id="WrongKey">Wrong control key - change it in the menu</string>
+    <!-- 403: no (or too short) command key in AAPS. -->
+    <string id="NoKeyInAaps">No control key set in AAPS</string>
+    <!-- 429: AAPS blocks commands for 15 min after 5 wrong keys. -->
+    <string id="Locked">AAPS locked after wrong keys, try later</string>
+    <string id="NoPhone">No phone</string>
+    <string id="NoAnswer">AAPS not answering (Garmin plugin/HTTP server?)</string>
+    <!-- The code is appended in Aaps.mc: "Error 404". -->
+    <string id="Error">Error</string>
+    <string id="UnknownAnswer">Unknown answer from AAPS</string>
+    <!-- Shown until BACK when a TT or scene commit got no clear answer.
+         The code is appended on a new line in ConfirmFlow.mc. -->
+    <string id="UnknownCheck">Unknown – check AAPS</string>
+    <!-- Key entry: the AAPS "Garmin watch control key", digits only. ControlKey is
+         also the main menu item. KeyHintSave is shown from 8 digits on, when the
+         UP/DOWN cycle also has the save check mark; KeyMax at 16 digits. -->
+    <string id="ControlKey">Control key</string>
+    <string id="KeyLength">8-16 digits</string>
+    <string id="KeyHint">UP/DOWN = 0-9</string>
+    <string id="KeyHintSave">UP/DOWN = 0-9 or save</string>
+    <string id="KeyMax">16 digits, the maximum</string>
+    <string id="KeyNext">START = add digit</string>
+    <string id="KeySave">START = save</string>
+    <string id="KeyBack">BACK = delete digit</string>
+</strings>

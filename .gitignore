@@ -1,0 +1,37 @@
+# Old key file from before the key was typed in on the watch - never commit it
+Secrets.mc
+source/Secrets.mc
+
+# Build output
+bin/
+output/
+*.prg
+*.iq
+*.debug.xml
+gen/
+mir/
+internal-mir/
+external-mir/
+
+# Developer keys - never commit
+developer_key*
+*.der
+*.pem
+
+# Logs
+*.TXT
+*.log
+logs/
+LOGS/
+
+# Local scripts
+*.ps1
+*.bat
+
+# Editor / OS files
+.vscode/
+*.code-workspace
+.project
+desktop.ini
+Thumbs.db
+.DS_Store

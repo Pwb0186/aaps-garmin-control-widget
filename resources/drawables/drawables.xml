@@ -1,0 +1,30 @@
+<drawables>
+    <!-- The launcher icon is what the glance loop shows left of the glance; the
+         AndroidAPS app icon (AGPL-3.0) makes the widget recognisable as AAPS. -->
+    <bitmap id="LauncherIcon" filename="aaps_launcher.png" />
+    <!-- Temp target icons from AndroidAPS (AGPL-3.0), converted to 40 px PNGs for the
+         fr955 menu icon slot. No icon is glance scoped, so they do not cost memory in the
+         small glance process. -->
+    <bitmap id="TtActivity" filename="tt_activity.png" />
+    <bitmap id="TtEating" filename="tt_eating.png" />
+    <bitmap id="TtHypo" filename="tt_hypo.png" />
+    <bitmap id="TtCancel" filename="tt_cancel.png" />
+    <!-- IcTtManual in the AAPS temp target green, like the main menu's temp target icon. -->
+    <bitmap id="TtManual" filename="tt_manual.png" />
+    <!-- Main menu icons, also from AndroidAPS: IcTtHigh (in the AAPS temp target green), IcAutomation (what AAPS
+         shows for scenes, in its scene colour), IcQuickWizard, IcCalculator (green
+         like the AAPS calculator button), the Wear treatment icon ic_bolus_carbs (carbs and insulin colours) for treatment,
+         and IcBolus with the cross from
+         IcCancelExtendedBolus for stop, because AAPS has no plain stop bolus icon. -->
+    <bitmap id="MenuTt" filename="aaps_tt.png" />
+    <bitmap id="MenuScene" filename="aaps_scene.png" />
+    <bitmap id="MenuQw" filename="aaps_qw.png" />
+    <bitmap id="MenuWizard" filename="aaps_wizard.png" />
+    <bitmap id="MenuTreatment" filename="aaps_treatment.png" />
+    <bitmap id="MenuStop" filename="aaps_stop.png" />
+    <!-- Meal type icons from the AAPS bolus wizard (IcBread, IcCake, IcPizza), in
+         the AAPS carbs colour. -->
+    <bitmap id="MealBread" filename="meal_bread.png" />
+    <bitmap id="MealCake" filename="meal_cake.png" />
+    <bitmap id="MealPizza" filename="meal_pizza.png" />
+</drawables>
