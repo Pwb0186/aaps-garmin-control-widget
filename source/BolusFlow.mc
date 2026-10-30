@@ -72,6 +72,8 @@ class BolusFlow {
     private var _stopShown as Number = 0;
     private var _polling as Boolean = false;
     private var _stopFromScreen as Boolean = false;
+    // The stop screen on top, so polling can feed it the bolus progress.
+    private var _stop as StopView?;
     // Which entry asked /status (ENTRY_...).
     private var _entry as Number = ENTRY_QW;
     // Treatment: insulin in hundredths of a unit, the limits, pump step and
@@ -127,6 +129,7 @@ class BolusFlow {
         var ok = Aaps.isOk(code, data);
         if (ok && (data as Dictionary)["bolusRunning"] == true) {
             showStop(false, null);
+            showProgress(data as Dictionary);
         } else if (_entry == ENTRY_QW) {
             Aaps.send("/qw/list", {}, method(:onList));
         } else if (_entry == ENTRY_WIZARD) {
@@ -545,7 +548,9 @@ class BolusFlow {
     // still counts from when the screen was first shown.
     private function showStop(sent as Boolean, error as String?) as Void {
         _status = null;
-        WatchUi.switchToView(new StopView(sent, error), new StopDelegate(self), WatchUi.SLIDE_IMMEDIATE);
+        var view = new StopView(sent, error, INSULIN_COLOR);
+        _stop = view;
+        WatchUi.switchToView(view, new StopDelegate(self), WatchUi.SLIDE_IMMEDIATE);
         if (error == null) {
             _stopShown = System.getTimer();
         }
@@ -580,6 +585,27 @@ class BolusFlow {
         // read like "nothing was given".
         if (Aaps.isOk(code, data) && (data as Dictionary)["bolusRunning"] == false) {
             close();
+        } else if (Aaps.isOk(code, data)) {
+            showProgress(data as Dictionary);
+        }
+    }
+
+    // Older AAPS versions, an SMB or a bolus AAPS has no progress for send no
+    // bolusPercent/bolusInsulin; the screen then has no ring or amount, so it
+    // never shows a progress it was not told. A failed poll changes nothing.
+    private function showProgress(d as Dictionary) as Void {
+        var view = _stop;
+        if (view == null) {
+            return;
+        }
+        var percent = d["bolusPercent"];
+        var insulin = d["bolusInsulin"];
+        if (percent instanceof Number && percent >= 0 && percent <= 100 && Aaps.isNumeric(insulin)) {
+            // Whole hundredths, like the treatment picker, so the text is exact.
+            var total = ((insulin as Numeric).toFloat() * 100 + 0.5f).toNumber();
+            view.setProgress(total > 0 ? percent : null, total);
+        } else {
+            view.setProgress(null, 0);
         }
     }
 
@@ -590,6 +616,7 @@ class BolusFlow {
             return;
         }
         _polling = false;
+        _stop = null;
         _stopFromScreen = true;
         _timer.stop();
         var status = new StatusView(Aaps.str(Rez.Strings.Sending));
@@ -629,6 +656,7 @@ class BolusFlow {
     function close() as Void {
         _timer.stop();
         _polling = false;
+        _stop = null;
         stopHold();
         _id = null;
         _status = null;

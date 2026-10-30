@@ -80,8 +80,8 @@ module MainMenu {
             menu.addItem(item(Rez.Strings.Treatment, :treatment, Rez.Drawables.MenuTreatment));
         }
         menu.addItem(item(Rez.Strings.StopBolus, :stop, Rez.Drawables.MenuStop));
-        // No icon: AAPS has none that fits, and it keeps the setup item apart.
-        menu.addItem(new WatchUi.MenuItem(Aaps.str(Rez.Strings.ControlKey), null, :key, null));
+        // Grey icon, unlike the coloured commands, so the setup item stays apart.
+        menu.addItem(item(Rez.Strings.ControlKey, :key, Rez.Drawables.MenuKey));
         return menu;
     }
 

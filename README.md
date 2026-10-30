@@ -175,6 +175,12 @@ START stops the bolus at once; BACK closes the screen. A failed stop shows the e
 START tries again. Opening Quick Wizard, bolus wizard or treatment while a bolus is running
 shows the STOP screen instead.
 
+While the bolus runs, a light blue ring along the screen edge fills clockwise and the top
+shows the delivered amount, e.g. `1.25 / 5.00 U`, updated every 3 s. They only move as far
+as the pump reports progress to AAPS (some pumps only report at the end), and they need
+AAPS from the fork branch `GarminPush+Steps+Control-V4.0.0-rc1` with this change; older
+AAPS versions (and SMBs) show the STOP screen without them.
+
 ## Unknown results
 
 Only clear refusals count as "nothing was done": a wrong or missing key, a lock after
@@ -187,9 +193,9 @@ bolus is running. The widget never sends a command again by itself.
 
 ## Pickers
 
-UP/DOWN change the value one step. Five quick presses in a row in the same direction move
-five steps per press; after 1 s without a press it is one step again. (Holding UP or DOWN
-is taken by the watch itself for its menu and music controls, so there is no hold-to-repeat.)
+UP/DOWN change the value exactly one step per press, however fast you press, so the value
+never jumps past what you are watching. (Holding UP or DOWN is taken by the watch itself
+for its menu and music controls, so there is no hold-to-repeat.)
 
 ---
 
@@ -240,6 +246,8 @@ AAPS' own language.
 The icons come from [AndroidAPS](https://github.com/nightscout/AndroidAPS) (AGPL-3.0):
 the AAPS app icon, the temp target, Quick Wizard, calculator, automation, bolus and meal
 type icons, and the Wear treatment icon, converted to 40 px PNGs for the watch.
+The control key icon is the "key" icon from Google's
+[Material Symbols](https://github.com/google/material-design-icons) (Apache-2.0).
 
 Because it ships those icons, this repository is licensed under the GNU Affero General
 Public License v3.0; see [LICENSE](LICENSE).

@@ -22,6 +22,9 @@
     <bitmap id="MenuWizard" filename="aaps_wizard.png" />
     <bitmap id="MenuTreatment" filename="aaps_treatment.png" />
     <bitmap id="MenuStop" filename="aaps_stop.png" />
+    <!-- Material "key" icon (Apache 2.0), since AAPS has no key icon; grey so the
+         setup item stays apart from the commands. -->
+    <bitmap id="MenuKey" filename="aaps_key.png" />
     <!-- Meal type icons from the AAPS bolus wizard (IcBread, IcCake, IcPizza), in
          the AAPS carbs colour. -->
     <bitmap id="MealBread" filename="meal_bread.png" />

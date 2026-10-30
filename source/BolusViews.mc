@@ -1,7 +1,5 @@
 import Toybox.Graphics;
 import Toybox.Lang;
-import Toybox.System;
-import Toybox.Timer;
 import Toybox.WatchUi;
 
 // Amount picker for carbs (bolus wizard, treatment) and insulin (treatment),
@@ -13,18 +11,11 @@ import Toybox.WatchUi;
 // never pick up float rounding and the text sent to AAPS is exact.
 //
 // No hold-to-repeat: on the fr955 a long UP opens the watch menu and a long
-// DOWN the music controls, and a widget can not take those over. Instead
-// quick presses speed up: after FAST_PRESSES presses in the same direction,
-// each less than FAST_MS apart, every press moves FAST_STEPS steps, until
-// the keys rest for RESET_MS.
+// DOWN the music controls, and a widget can not take those over. Each press
+// moves exactly one step, however fast the presses come, so the amount can
+// never jump past the number the user is watching; with insulin a predictable
+// picker matters more than a fast one.
 class AmountView extends WatchUi.View {
-    private const FAST_PRESSES = 5;
-    private const FAST_STEPS = 5;
-    private const FAST_MS = 600;
-    // Longer than FAST_MS, so a short pause while watching the number does
-    // not drop back to single steps.
-    private const RESET_MS = 1000;
-
     private var _insulin as Boolean;
     private var _max as Number;
     // Grams for carbs, hundredths of a unit for insulin.
@@ -41,14 +32,6 @@ class AmountView extends WatchUi.View {
     private var _min as Number = 0;
     // Set by setTenths: the value is whole tenths, drawn with one decimal.
     private var _tenths as Boolean = false;
-    // The current run of presses: direction, length and time of the last one.
-    private var _dir as Number = 0;
-    private var _count as Number = 0;
-    private var _last as Number = 0;
-    // Only clears the "+0,25" text when a fast run ends; the speed itself is
-    // decided from the press times, so a late tick can not change a step.
-    private var _fastTimer as Timer.Timer = new Timer.Timer();
-    private var _fastShown as Boolean = false;
 
     function initialize(insulin as Boolean, max as Number, step as Number, color as Number?) {
         View.initialize();
@@ -90,29 +73,9 @@ class AmountView extends WatchUi.View {
 
     // One UP (dir 1) or DOWN (dir -1) press.
     function press(dir as Number) as Void {
-        var now = System.getTimer();
-        var gap = now - _last;
-        var fast = _count >= FAST_PRESSES;
-        if (dir == _dir && (gap < FAST_MS || (fast && gap < RESET_MS))) {
-            _count++;
-        } else {
-            _count = 1;
-        }
-        _dir = dir;
-        _last = now;
-        fast = _count >= FAST_PRESSES;
-        var value = _value + dir * (fast ? FAST_STEPS : 1) * _step;
+        var value = _value + dir * _step;
         _value = value < _min ? _min : (value > _max ? _max : value);
         _note = null;
-        _fastShown = fast;
-        if (fast) {
-            _fastTimer.start(method(:onFastEnd), RESET_MS, false);
-        }
-        WatchUi.requestUpdate();
-    }
-
-    function onFastEnd() as Void {
-        _fastShown = false;
         WatchUi.requestUpdate();
     }
 
@@ -120,12 +83,6 @@ class AmountView extends WatchUi.View {
     function setNote(text as String) as Void {
         _note = text;
         WatchUi.requestUpdate();
-    }
-
-    function onHide() as Void {
-        _fastTimer.stop();
-        _fastShown = false;
-        _count = 0;
     }
 
     // Hundredths as "1.55" or "1,55", tenths as "8.0" or "8,0". Insulin always
@@ -173,15 +130,11 @@ class AmountView extends WatchUi.View {
         dc.drawText(right + 4, h * 0.50, Graphics.FONT_SMALL, unit(),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        // During a fast run the hint line shows the bigger step, so the user
-        // sees why the number jumps.
         var note = _note;
         var hint;
         if (note != null) {
             dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
             hint = note;
-        } else if (_fastShown) {
-            hint = (_dir > 0 ? "+" : "-") + stepText(FAST_STEPS);
         } else {
             dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
             hint = Lang.format(Aaps.str(Rez.Strings.AmountHint), [stepText(1)]);
@@ -435,14 +388,34 @@ class BolusConfirmDelegate extends WatchUi.InputDelegate {
 // bolus already running or the commit answer was unknown; then the top stays
 // empty, since this watch does not know it just gave anything. After a failed
 // stop the top shows why instead, and START tries again.
+// When AAPS reports how far the bolus has come, a ring along the edge and the
+// delivered amount show it, in the insulin colour rather than green, so a
+// ring that is still filling is not read as "done".
 class StopView extends WatchUi.View {
     private var _sent as Boolean;
     private var _error as String?;
+    private var _color as Number;
+    // Null while AAPS gives no progress; the screen then looks as without it.
+    private var _percent as Number?;
+    // The whole bolus in hundredths of a unit.
+    private var _total as Number = 0;
 
-    function initialize(sent as Boolean, error as String?) {
+    function initialize(sent as Boolean, error as String?, color as Number) {
         View.initialize();
         _sent = sent;
         _error = error;
+        _color = color;
+    }
+
+    function setProgress(percent as Number?, total as Number) as Void {
+        _percent = percent;
+        _total = total;
+        WatchUi.requestUpdate();
+    }
+
+    // Hundredths as "1.25", the same two decimals as the insulin picker.
+    private function amountText(value as Number) as String {
+        return (value / 100).toString() + Aaps.str(Rez.Strings.DecimalSep) + (value % 100).format("%02d");
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {
@@ -451,11 +424,20 @@ class StopView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
         var error = _error;
+        var percent = _percent;
         if (error != null) {
             // The circle is narrow this high up; 60% x 16% stays inside it.
             dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
             var text = Graphics.fitTextToArea(error, Graphics.FONT_XTINY, w * 0.60, h * 0.16, true);
             dc.drawText(w / 2, h * 0.16, Graphics.FONT_XTINY, text == null ? "" : text,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        } else if (percent != null) {
+            // In place of the check mark: there is no room between the STOP
+            // circle and the lines below it, and a growing amount says just as
+            // clearly that the bolus went through. An error still wins the top.
+            dc.setColor(_color, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(w / 2, h * 0.16, Graphics.FONT_XTINY,
+                amountText(_total * percent / 100) + " / " + amountText(_total) + " " + Aaps.str(Rez.Strings.InsulinUnit),
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         } else if (_sent) {
             drawCheck(dc, w / 2, (h * 0.15).toNumber(), (w * 0.14).toNumber());
@@ -472,6 +454,25 @@ class StopView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(w / 2, h * 0.90, Graphics.FONT_XTINY, Aaps.str(Rez.Strings.StopStart),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        // Drawn like the hold ring on the confirm screen.
+        if (percent != null && percent > 0) {
+            var pen = 8;
+            dc.setPenWidth(pen);
+            dc.setColor(_color, Graphics.COLOR_TRANSPARENT);
+            var r = (w < h ? w : h) / 2 - pen / 2 - 1;
+            if (percent >= 100) {
+                dc.drawCircle(w / 2, h / 2, r);
+            } else {
+                // Clockwise from 12 o'clock; drawArc wants 0..360.
+                var end = 90 - 360 * percent / 100;
+                if (end < 0) {
+                    end += 360;
+                }
+                dc.drawArc(w / 2, h / 2, r, Graphics.ARC_CLOCKWISE, 90, end);
+            }
+            dc.setPenWidth(1);
+        }
     }
 }
 
