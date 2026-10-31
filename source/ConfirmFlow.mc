@@ -102,6 +102,8 @@ class ConfirmFlow {
             showResult(Aaps.errorText(code, data, Aaps.str(Rez.Strings.Error)));
         } else {
             _toMenu = true;
+            mayHaveActed();
+            _rebuild = true;
             showUnknown(Aaps.str(Rez.Strings.UnknownCheck) + "\n(" + code + ")");
         }
     }
@@ -119,6 +121,12 @@ class ConfirmFlow {
     // AAPS answered ok to commitPath: the flow updates the status the menus are
     // built from, so they fit without reopening the widget.
     function committed(commitPath as String) as Void {
+    }
+
+    // AAPS' answer to the commit is unknown, so it may have acted: the flow
+    // marks its TT or scene as possibly running, so the menus still offer the
+    // way to end it.
+    function mayHaveActed() as Void {
     }
 
     // Replaces the menu below (now on top) with a fresh one.

@@ -74,21 +74,27 @@ class StatusView extends WatchUi.View {
 }
 
 // Takes the close callback of whichever flow opened the screen, so the temp
-// target and bolus flows share it.
-class StatusDelegate extends WatchUi.BehaviorDelegate {
+// target and bolus flows share it. Only the BACK key closes it: a
+// BehaviorDelegate also takes a swipe right on touch models as BACK, which
+// could dismiss an unknown commit result before it is read.
+class StatusDelegate extends WatchUi.InputDelegate {
     private var _close as Method() as Void;
 
     function initialize(close as Method() as Void) {
-        BehaviorDelegate.initialize();
+        InputDelegate.initialize();
         _close = close;
     }
 
     // While a request is out, BACK is swallowed: leaving now would hide the
     // answer, and for a commit that answer is the only proof of what AAPS did.
-    function onBack() as Boolean {
-        if (!Aaps.waiting()) {
+    function onKey(evt as WatchUi.KeyEvent) as Boolean {
+        if (evt.getKey() == WatchUi.KEY_ESC && !Aaps.waiting()) {
             _close.invoke();
         }
+        return true;
+    }
+
+    function onSwipe(evt as WatchUi.SwipeEvent) as Boolean {
         return true;
     }
 }

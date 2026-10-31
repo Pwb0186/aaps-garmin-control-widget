@@ -78,6 +78,12 @@ class SceneFlow extends ConfirmFlow {
         MainMenu.sceneName = MainMenu.sceneActive ? _name : null;
     }
 
+    // Which scene runs, if any, is unknown, so the menu says "scene".
+    function mayHaveActed() as Void {
+        MainMenu.sceneActive = true;
+        MainMenu.sceneName = null;
+    }
+
     function rebuild() as Void {
         WatchUi.switchToView(buildMenu(), new SceneMenuDelegate(self), WatchUi.SLIDE_IMMEDIATE);
     }

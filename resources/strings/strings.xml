@@ -59,7 +59,7 @@
     <string id="StopStart">START = stop</string>
     <!-- Shown until BACK when a bolus commit got no clear answer: it may have been given.
          The code is appended on a new line in BolusFlow.mc. -->
-    <string id="UnknownBolus">Unknown – do NOT repeat, check AAPS</string>
+    <string id="UnknownBolus">Unknown – do NOT repeat. Check AAPS and pump.</string>
 
     <!-- 401 and 403 name the control key, which is set in the main menu. -->
     <string id="WrongKey">Wrong control key - change it in the menu</string>

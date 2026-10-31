@@ -7,8 +7,8 @@ import Toybox.WatchUi;
 // manual temp target's mg/dL and duration, and through setTenths for its mmol/L.
 // Own view instead of WatchUi.Picker: the picker's look and keys differ
 // between firmwares, while this only needs UP/DOWN/START.
-// Insulin is kept as a whole number of hundredths of a unit, so pump steps
-// never pick up float rounding and the text sent to AAPS is exact.
+// Insulin is kept as a whole number of thousandths of a unit, so pump steps
+// (down to 0.025 U) never pick up float rounding and the text sent to AAPS is exact.
 //
 // No hold-to-repeat: on the fr955 a long UP opens the watch menu and a long
 // DOWN the music controls, and a widget can not take those over. Each press
@@ -18,7 +18,7 @@ import Toybox.WatchUi;
 class AmountView extends WatchUi.View {
     private var _insulin as Boolean;
     private var _max as Number;
-    // Grams for carbs, hundredths of a unit for insulin.
+    // Grams for carbs, thousandths of a unit for insulin.
     private var _step as Number;
     // Null for the plain bolus wizard screen; the treatment screens are drawn
     // in the AAPS colours for insulin and carbs, so they are told apart at a glance.
@@ -56,7 +56,7 @@ class AmountView extends WatchUi.View {
     }
 
     // A number with one decimal, kept as whole tenths like insulin is kept as
-    // hundredths, so 0.1 steps never pick up float rounding.
+    // thousandths, so 0.1 steps never pick up float rounding.
     function setTenths(title as ResourceId, unit as String, min as Number, value as Number) as Void {
         setWhole(title, null, unit, min, value);
         _tenths = true;
@@ -66,7 +66,7 @@ class AmountView extends WatchUi.View {
         return _title;
     }
 
-    // Grams, minutes or percent; hundredths of a unit for insulin, tenths after setTenths.
+    // Grams, minutes or percent; thousandths of a unit for insulin, tenths after setTenths.
     function getValue() as Number {
         return _value;
     }
@@ -85,11 +85,23 @@ class AmountView extends WatchUi.View {
         WatchUi.requestUpdate();
     }
 
-    // Hundredths as "1.55" or "1,55", tenths as "8.0" or "8,0". Insulin always
-    // has two decimals, so every pump step (0.05, 0.1, ...) reads the same way.
+    // Insulin as "1.55" or "1,55", tenths as "8.0" or "8,0". Insulin has two
+    // decimals, or three when the pump step needs them (0.025); the step, not
+    // the value, decides, so every press reads the same way.
     private function decimalText(value as Number) as String {
-        var scale = _tenths ? 10 : 100;
-        return (value / scale).toString() + Aaps.str(Rez.Strings.DecimalSep) + (value % scale).format(_tenths ? "%d" : "%02d");
+        return wholeText(value) + Aaps.str(Rez.Strings.DecimalSep) + fracText(value);
+    }
+
+    private function wholeText(value as Number) as String {
+        return (value / (_tenths ? 10 : 1000)).toString();
+    }
+
+    private function fracText(value as Number) as String {
+        if (_tenths) {
+            return (value % 10).format("%d");
+        }
+        var frac = value % 1000;
+        return _step % 10 == 0 ? (frac / 10).format("%02d") : frac.format("%03d");
     }
 
     private function stepText(steps as Number) as String {
@@ -178,9 +190,8 @@ class AmountView extends WatchUi.View {
     // drawn by hand: a dot on the baseline, with a tail for the Danish comma.
     private function drawDecimal(dc as Graphics.Dc, x as Number, y as Float) as Number {
         var font = Graphics.FONT_NUMBER_HOT;
-        var scale = _tenths ? 10 : 100;
-        var whole = (_value / scale).toString();
-        var frac = (_value % scale).format(_tenths ? "%d" : "%02d");
+        var whole = wholeText(_value);
+        var frac = fracText(_value);
         var wholeW = dc.getTextWidthInPixels(whole, font);
         var fracW = dc.getTextWidthInPixels(frac, font);
         var r = dc.getTextWidthInPixels("0", font) / 8;
@@ -413,7 +424,8 @@ class StopView extends WatchUi.View {
         WatchUi.requestUpdate();
     }
 
-    // Hundredths as "1.25", the same two decimals as the insulin picker.
+    // Hundredths as "1.25": AAPS' progress is shown to two decimals, which is
+    // enough for a readout, also with 0.025 U pump steps.
     private function amountText(value as Number) as String {
         return (value / 100).toString() + Aaps.str(Rez.Strings.DecimalSep) + (value % 100).format("%02d");
     }

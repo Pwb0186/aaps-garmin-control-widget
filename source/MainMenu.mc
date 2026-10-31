@@ -37,6 +37,7 @@ module MainMenu {
         var showQw = true;
         var showScenes = true;
         var showTreatment = true;
+        var showWizard = true;
         if (Aaps.isOk(code, data)) {
             var d = data as Dictionary;
             var qwCount = d["qwCount"];
@@ -57,16 +58,20 @@ module MainMenu {
             mgdl = units instanceof String && units.equals("mgdl");
             var bolusOn = d["bolusEnabled"];
             var carbsOn = d["carbsEnabled"];
+            // Both wizards always aim at a bolus, so with bolus from the watch
+            // off in AAPS they are hidden; Treatment stays while carbs are allowed.
             if (bolusOn instanceof Boolean && carbsOn instanceof Boolean) {
+                showWizard = bolusOn;
+                showQw = showQw && bolusOn;
                 showTreatment = bolusOn || carbsOn;
             }
         }
-        WatchUi.switchToView(build(showQw, showScenes, showTreatment), new MainMenuDelegate(), WatchUi.SLIDE_IMMEDIATE);
+        WatchUi.switchToView(build(showQw, showScenes, showWizard, showTreatment), new MainMenuDelegate(), WatchUi.SLIDE_IMMEDIATE);
     }
 
     // Stop bolus is always shown and is the last command, so it is found in the
     // same place. Control key is below it: setup, not a command.
-    function build(showQw as Boolean, showScenes as Boolean, showTreatment as Boolean) as WatchUi.Menu2 {
+    function build(showQw as Boolean, showScenes as Boolean, showWizard as Boolean, showTreatment as Boolean) as WatchUi.Menu2 {
         var menu = new WatchUi.Menu2({:title => "AAPS"});
         menu.addItem(item(Rez.Strings.TempTarget, :tt, Rez.Drawables.MenuTt));
         if (showScenes) {
@@ -75,7 +80,9 @@ module MainMenu {
         if (showQw) {
             menu.addItem(item(Rez.Strings.QuickWizard, :qw, Rez.Drawables.MenuQw));
         }
-        menu.addItem(item(Rez.Strings.BolusWizard, :wizard, Rez.Drawables.MenuWizard));
+        if (showWizard) {
+            menu.addItem(item(Rez.Strings.BolusWizard, :wizard, Rez.Drawables.MenuWizard));
+        }
         if (showTreatment) {
             menu.addItem(item(Rez.Strings.Treatment, :treatment, Rez.Drawables.MenuTreatment));
         }

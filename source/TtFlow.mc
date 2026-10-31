@@ -95,6 +95,10 @@ class TtFlow extends ConfirmFlow {
         MainMenu.ttActive = !_preset.equals("cancel");
     }
 
+    function mayHaveActed() as Void {
+        MainMenu.ttActive = true;
+    }
+
     function rebuild() as Void {
         WatchUi.switchToView(buildMenu(MainMenu.ttActive), new TtMenuDelegate(self), WatchUi.SLIDE_IMMEDIATE);
     }

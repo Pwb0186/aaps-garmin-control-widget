@@ -155,7 +155,7 @@ AAPS still refuses whatever no longer applies.
 2. **Scenes** - the scenes set up in AAPS, with **End &lt;scene&gt;** at the top when one is
    running. Shown only when AAPS has scenes or one is running.
 3. **Quick Wizard** - the Quick Wizard buttons AAPS reports as active now. Shown only when
-   there is at least one.
+   there is at least one and bolus is allowed from the watch.
 4. **Bolus wizard** - the same steps as AAPS' bolus wizard:
    carbs (0-200 g in 5 g steps), meal type **Bread / Cake / Pizza** (cake and pizza give
    part of the carbs as extended carbs, like in AAPS; skipped at 0 g), **carb time**
@@ -163,8 +163,9 @@ AAPS still refuses whatever no longer applies.
    (10-200 % in 5 % steps, starting at AAPS' default). START moves on and BACK goes back
    one screen, so pressing START all the way gives AAPS' defaults. If AAPS refuses the
    calculation (for example "No insulin required"), its message is shown and the widget
-   returns to the main menu.
-5. **Treatment** - insulin (light blue, in the pump's bolus step, up to AAPS' max bolus),
+   returns to the main menu. Shown only when bolus is allowed from the watch.
+5. **Treatment** - insulin (light blue, in the pump's bolus step, up to AAPS' max bolus;
+   two decimals, three when the step needs them, e.g. 0.025),
    then carbs (orange, up to AAPS' max carbs). 0 U means carbs only; 0 g means insulin
    only. AAPS rounds and limits the amounts, and its confirmation lines show what will
    really be given. Shown only when carbs and bolus are allowed from the watch.
@@ -179,14 +180,18 @@ BACK goes one level up; BACK in the main menu leaves the widget.
 ## Confirming
 
 - **Temp target, scene, and carbs only (0 U):** one START press on the confirm screen.
+- The confirm screen shows AAPS' own lines, except for **End scene** (AAPS has no prepare
+  step for it, so the watch asks its own question) and **Stop bolus** (no confirmation at
+  all, since stopping can never give insulin).
 - **Anything with insulin:** hold START for 2 s. A ring along the edge fills while you
   hold, and the watch vibrates when it counts. Releasing earlier sends nothing.
 - Only the START key confirms, and only a press that started on that screen: a press that
   was already down (for example from a long press in the menu) does not count. Touch,
   swipes and the menu key do nothing. If the confirm screen is covered (a notification),
   the hold is cancelled.
-- BACK cancels. A confirm screen expires without sending anything: after 30 s for insulin,
-  60 s for temp targets and scenes (well before AAPS drops the prepared command).
+- BACK cancels. A confirm screen expires without sending anything: after 30 s for insulin
+  and for carbs only, 60 s for temp targets and scenes (well before AAPS drops the
+  prepared command).
 - BACK or the timeout on a bolus/carbs confirmation tells AAPS to drop the prepared dose
   (`/bolus/discard`, AAPS dev, so SMBs resume at once); older AAPS ignores it.
 - A green check mark shows that AAPS accepted the command.
@@ -194,9 +199,10 @@ BACK goes one level up; BACK in the main menu leaves the widget.
 ## After a bolus
 
 A red **STOP** screen stays while the bolus runs: the widget asks AAPS every 3 s and closes
-the screen when AAPS says no bolus is running (or after 20 min if AAPS can not be asked).
-START stops the bolus at once; BACK closes the screen. A failed stop shows the error and
-START tries again. Opening Quick Wizard, bolus wizard or treatment while a bolus is running
+the screen when AAPS says no bolus is running, and after 20 min regardless.
+START stops the bolus at once; BACK closes the screen. A failed stop on the STOP screen
+shows the error there and START tries again; a failed **Stop bolus** from the main menu
+shows the error for 3 s and returns to the menu. Opening Quick Wizard, bolus wizard or treatment while a bolus is running
 shows the STOP screen instead.
 
 While the bolus runs, a light blue ring along the screen edge fills clockwise and the top
@@ -211,9 +217,13 @@ Only clear refusals count as "nothing was done": a wrong or missing key, a lock 
 wrong keys, or a plain error from AAPS (`ok:false` that is not marked `unknown`). Those are
 shown as an error, and you can choose again. Anything else after a commit - timeout, lost
 connection, an unclear answer - is treated as unknown: the widget shows
-**"Unknown - do NOT repeat, check AAPS"** (vibrating, for a bolus) or "Unknown - check
-AAPS" (temp target, scene) until you press BACK. After an unknown bolus the STOP screen follows, in case the
-bolus is running. The widget never sends a command again by itself.
+**"Unknown - do NOT repeat. Check AAPS and pump."** (vibrating, for a bolus) or "Unknown -
+check AAPS" (temp target, scene) until you press the BACK key; a swipe does not close it,
+so it is not dismissed unread. After an unknown bolus the STOP screen follows, in case the
+bolus is running or still queued in AAPS: it only closes once AAPS has said "no bolus
+running" for at least 30 s, and it stays open (still asking, START still stops) while AAPS
+can not be asked. After an unknown temp target or scene, **Cancel TT** / **End scene** is
+offered, since it may be running. The widget never sends a command again by itself.
 
 ## Pickers
 

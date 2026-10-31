@@ -31,15 +31,20 @@ class BolusFlow {
     // slower pumps and large boluses take longer), so the screen only gives
     // up when AAPS cannot be asked at all.
     private const STOP_MAX_MS = 1200000;
+    // After an unknown commit AAPS may still have the bolus queued, so a
+    // single "not running" does not close the stop screen; "not running" must
+    // hold for this long.
+    private const UNKNOWN_IDLE_MS = 30000;
     // Nearest fr955 palette colours to the AAPS night theme insulin (0xFF67DFE8)
     // and carbs (0xFFFFAE01) colours.
     private const INSULIN_COLOR = 0x55FFFF;
     private const CARBS_COLOR = 0xFFAA00;
     // Used when /status did not give the limits; AAPS limits the amount anyway.
-    private const DEFAULT_MAX_INSULIN = 1000;
+    // Insulin is in thousandths of a unit (10 U).
+    private const DEFAULT_MAX_INSULIN = 10000;
     private const DEFAULT_MAX_CARBS = 200;
-    // Hundredths of a unit; 0.05 U is the finest step most pumps give.
-    private const DEFAULT_INSULIN_STEP = 5;
+    // Thousandths of a unit, so pump steps such as 0.025 U stay exact.
+    private const DEFAULT_INSULIN_STEP = 50;
     private const CARBS_STEP = 5;
     // The bolus wizard's limits in AAPS; it refuses anything outside them.
     private const CARB_TIME_MAX = 60;
@@ -72,11 +77,15 @@ class BolusFlow {
     private var _stopShown as Number = 0;
     private var _polling as Boolean = false;
     private var _stopFromScreen as Boolean = false;
+    // Set when the stop screen follows an unknown commit; _idleSince is when
+    // its polls first said "not running" (null while running or not yet seen).
+    private var _unknown as Boolean = false;
+    private var _idleSince as Number? = null;
     // The stop screen on top, so polling can feed it the bolus progress.
     private var _stop as StopView?;
     // Which entry asked /status (ENTRY_...).
     private var _entry as Number = ENTRY_QW;
-    // Treatment: insulin in hundredths of a unit, the limits, pump step and
+    // Treatment: insulin in thousandths of a unit, the limits, pump step and
     // settings from /status, and whether the insulin screen was shown (it is a
     // view below the carbs screen then). _carbsOnly is set by every prepare
     // answer: true when no insulin will be given.
@@ -291,17 +300,17 @@ class BolusFlow {
         var bolusEnabled = true;
         if (d != null) {
             // The pump's own step, so every press is an amount the pump can
-            // give. Rounded to whole hundredths, the finest the watch keeps.
+            // give. Rounded to whole thousandths, the finest the watch keeps.
             var step = d["bolusStep"];
             if (Aaps.isNumeric(step)) {
-                var hundredths = ((step as Numeric).toFloat() * 100 + 0.5f).toNumber();
-                if (hundredths > 0) {
-                    _insulinStep = hundredths;
+                var thousandths = ((step as Numeric).toFloat() * 1000 + 0.5f).toNumber();
+                if (thousandths > 0) {
+                    _insulinStep = thousandths;
                 }
             }
             var maxBolus = d["maxBolus"];
             if (Aaps.isNumeric(maxBolus)) {
-                maxInsulin = ((maxBolus as Numeric).toFloat() * 100 + 0.5f).toNumber();
+                maxInsulin = ((maxBolus as Numeric).toFloat() * 1000 + 0.5f).toNumber();
             }
             var maxCarbs = d["maxCarbs"];
             if (maxCarbs instanceof Number || maxCarbs instanceof Long) {
@@ -354,9 +363,9 @@ class BolusFlow {
     private function prepareTreatment(carbs as Number, below as Number) as Void {
         _below = below;
         pushStatus(Rez.Strings.Loading);
-        // Built from whole hundredths, so the decimal mark is always "." and
-        // there are always two decimals, whatever the watch language.
-        var insulin = (_insulin / 100).toString() + "." + (_insulin % 100).format("%02d");
+        // Built from whole thousandths, so the decimal mark is always "." and
+        // the text is exact, whatever the watch language.
+        var insulin = (_insulin / 1000).toString() + "." + (_insulin % 1000).format("%03d");
         Aaps.send("/treatment/prepare", {"insulin" => insulin, "carbs" => carbs.toString()}, method(:onPrepare));
     }
 
@@ -510,6 +519,8 @@ class BolusFlow {
     // BACK on the unknown text. No check mark on the stop screen: the watch
     // does not know whether the bolus was given.
     function afterUnknown() as Void {
+        _unknown = true;
+        _idleSince = null;
         showStop(false, null);
     }
 
@@ -602,8 +613,16 @@ class BolusFlow {
         // Straight to the main menu without a message: "No bolus running"
         // read like "nothing was given".
         if (Aaps.isOk(code, data) && (data as Dictionary)["bolusRunning"] == false) {
-            close();
+            var now = System.getTimer();
+            if (_idleSince == null) {
+                _idleSince = now;
+            }
+            if (!_unknown || now - (_idleSince as Number) >= UNKNOWN_IDLE_MS) {
+                close();
+            }
         } else if (Aaps.isOk(code, data)) {
+            // Running again: the wait for a lasting "not running" starts over.
+            _idleSince = null;
             showProgress(data as Dictionary);
         }
     }
@@ -674,6 +693,8 @@ class BolusFlow {
     function close() as Void {
         _timer.stop();
         _polling = false;
+        _unknown = false;
+        _idleSince = null;
         _stop = null;
         stopHold();
         // _id is only set while a confirm screen is up, so this is BACK on it.
