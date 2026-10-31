@@ -17,6 +17,28 @@ confirm on the watch.
 
 ---
 
+## Screenshots
+
+Forerunner 955 in the Connect IQ simulator.
+
+<table>
+<tr>
+<td><img src="AapsControl.png" width="200" alt="Main menu"><br>Main menu</td>
+<td><img src="AapsControl1.png" width="200" alt="Main menu, lower part"><br>Main menu, lower part</td>
+<td><img src="AapsControl8.png" width="200" alt="Temp target menu"><br>Temp target menu</td>
+</tr>
+<tr>
+<td><img src="AapsControl3.png" width="200" alt="Bolus wizard: carbs"><br>Bolus wizard: carbs</td>
+<td><img src="AapsControl4.png" width="200" alt="Bolus wizard: meal type"><br>Bolus wizard: meal type</td>
+<td><img src="AapsControl5.png" width="200" alt="Bolus wizard: carb time"><br>Bolus wizard: carb time</td>
+</tr>
+<tr>
+<td><img src="AapsControl6.png" width="200" alt="AAPS confirmation, hold START 2 s"><br>AAPS confirmation, hold START 2 s</td>
+<td><img src="AapsControl7.png" width="200" alt="Stop screen with bolus progress ring"><br>Stop screen with bolus progress ring</td>
+<td></td>
+</tr>
+</table>
+
 ## Requirements
 
 - **AAPS built from the fork branch
