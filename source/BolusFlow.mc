@@ -518,12 +518,30 @@ class BolusFlow {
     function onExpired() as Void {
         _toMenu = true;
         stopHold();
-        _id = null;
+        discard();
         _confirm = null;
         var status = new StatusView(Aaps.str(Rez.Strings.Expired));
         _status = status;
         WatchUi.switchToView(status, new StatusDelegate(method(:close)), WatchUi.SLIDE_IMMEDIATE);
         startTimer(method(:close), RESULT_MS);
+    }
+
+    // Left without a commit: tells AAPS to drop the prepared dose, so AAPS
+    // (dev) resumes SMBs now instead of after its own timeout. Sent without
+    // busy and only when nothing else is out, so it never delays or refuses
+    // the next action; when skipped, AAPS ends the pause by itself.
+    private function discard() as Void {
+        var id = _id;
+        _id = null;
+        if (id != null && !Aaps.waiting()) {
+            Aaps.request("/bolus/discard", {"id" => id}, method(:onDiscard));
+        }
+    }
+
+    // Ignored, also the 404 from AAPS versions without /bolus/discard: the
+    // user has already moved on, and there is nothing to show or retry.
+    function onDiscard(code as Number, data as Dictionary or String or Null) as Void {
+        Aaps.log("bolus discard " + code);
     }
 
     // ---- Stop
@@ -658,7 +676,8 @@ class BolusFlow {
         _polling = false;
         _stop = null;
         stopHold();
-        _id = null;
+        // _id is only set while a confirm screen is up, so this is BACK on it.
+        discard();
         _status = null;
         _confirm = null;
         var pops = 1 + (_toMenu ? _below : 0);

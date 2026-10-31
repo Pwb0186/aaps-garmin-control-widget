@@ -187,6 +187,8 @@ BACK goes one level up; BACK in the main menu leaves the widget.
   the hold is cancelled.
 - BACK cancels. A confirm screen expires without sending anything: after 30 s for insulin,
   60 s for temp targets and scenes (well before AAPS drops the prepared command).
+- BACK or the timeout on a bolus/carbs confirmation tells AAPS to drop the prepared dose
+  (`/bolus/discard`, AAPS dev, so SMBs resume at once); older AAPS ignores it.
 - A green check mark shows that AAPS accepted the command.
 
 ## After a bolus
