@@ -42,8 +42,8 @@ Forerunner 955 in the Connect IQ simulator.
 ## Requirements
 
 - **AAPS built from the fork branch
-  [`GarminPush+Steps+Control-V4.0.0-rc1`](https://github.com/Pwb0186/AndroidAPS/tree/GarminPush+Steps+Control-V4.0.0-rc1)**
-  (on AAPS `4.0.0-rc1`). Stock AAPS has no watch commands.
+  [`GarminPush+Steps+Control-V4.0.0`](https://github.com/Pwb0186/AndroidAPS/tree/GarminPush+Steps+Control-V4.0.0)**
+  (on AAPS 4.0.0). Stock AAPS has no watch commands.
 - In AAPS: the **Garmin** plugin enabled with **Local HTTP server** on (port `28891`).
 - In AAPS' Garmin settings, a **Garmin watch control key** of **8-16 digits** (digits
   only, since the watch can only type digits; AAPS needs at least 8 characters).
@@ -208,7 +208,7 @@ shows the STOP screen instead.
 While the bolus runs, a light blue ring along the screen edge fills clockwise and the top
 shows the delivered amount, e.g. `1.25 / 5.00 U`, updated every 3 s. They only move as far
 as the pump reports progress to AAPS (some pumps only report at the end), and they need
-AAPS from the fork branch `GarminPush+Steps+Control-V4.0.0-rc1` with this change; older
+AAPS from the fork branch `GarminPush+Steps+Control-V4.0.0` with this change; older
 AAPS versions (and SMBs) show the STOP screen without them.
 
 ## Unknown results
