@@ -410,6 +410,8 @@ class StopView extends WatchUi.View {
     private var _percent as Number?;
     // The whole bolus in hundredths of a unit.
     private var _total as Number = 0;
+    // What is given so far, in hundredths, already rounded to the pump's step.
+    private var _delivered as Number = 0;
 
     function initialize(sent as Boolean, error as String?, color as Number) {
         View.initialize();
@@ -418,9 +420,10 @@ class StopView extends WatchUi.View {
         _color = color;
     }
 
-    function setProgress(percent as Number?, total as Number) as Void {
+    function setProgress(percent as Number?, total as Number, delivered as Number) as Void {
         _percent = percent;
         _total = total;
+        _delivered = delivered;
         WatchUi.requestUpdate();
     }
 
@@ -449,7 +452,7 @@ class StopView extends WatchUi.View {
             // clearly that the bolus went through. An error still wins the top.
             dc.setColor(_color, Graphics.COLOR_TRANSPARENT);
             dc.drawText(w / 2, h * 0.16, Graphics.FONT_XTINY,
-                amountText(_total * percent / 100) + " / " + amountText(_total) + " " + Aaps.str(Rez.Strings.InsulinUnit),
+                amountText(_delivered) + " / " + amountText(_total) + " " + Aaps.str(Rez.Strings.InsulinUnit),
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         } else if (_sent) {
             drawCheck(dc, w / 2, (h * 0.15).toNumber(), (w * 0.14).toNumber());

@@ -640,10 +640,26 @@ class BolusFlow {
         if (percent instanceof Number && percent >= 0 && percent <= 100 && Aaps.isNumeric(insulin)) {
             // Whole hundredths, like the treatment picker, so the text is exact.
             var total = ((insulin as Numeric).toFloat() * 100 + 0.5f).toNumber();
-            view.setProgress(total > 0 ? percent : null, total);
+            view.setProgress(total > 0 ? percent : null, total, delivered(insulin as Numeric, percent, d["bolusStep"], total));
         } else {
-            view.setProgress(null, 0);
+            view.setProgress(null, 0, 0);
         }
+    }
+
+    // The delivered amount in hundredths. AAPS sends whole percent, so total x
+    // percent gives amounts like 0.03 U that the pump never gives; rounded to
+    // the pump's step (bolusStep, in the same answer) it moves like the pump.
+    // Thousandths for the rounding, so 0.025 U steps work too.
+    private function delivered(insulin as Numeric, percent as Number, step as Object?, total as Number) as Number {
+        var milli = (insulin.toFloat() * 1000 + 0.5f).toNumber() * percent / 100;
+        if (Aaps.isNumeric(step)) {
+            var s = ((step as Numeric).toFloat() * 1000 + 0.5f).toNumber();
+            if (s > 0) {
+                milli = (milli + s / 2) / s * s;
+            }
+        }
+        var hundredths = (milli + 5) / 10;
+        return hundredths > total ? total : hundredths;
     }
 
     // START on the stop screen. The stop is sent at once, even if a /status
