@@ -10,9 +10,11 @@ import Toybox.WatchUi;
 module Aaps {
     const URL = "http://127.0.0.1:28891";
 
-    // The control key is typed in on the watch (KeyView) and kept in Storage,
-    // so it is never built into the .prg. AAPS refuses keys shorter than 8
+    // The remote PIN is typed in on the watch (KeyView) and kept in Storage,
+    // so it is never built into the .prg. AAPS refuses PINs shorter than 8
     // characters; 16 digits are plenty and still fit on one line when typed.
+    // The storage name keeps the old name "ControlKey", so a PIN that is
+    // already stored on the watch still works after an update.
     const KEY_STORAGE = "ControlKey";
     const KEY_MIN = 8;
     const KEY_MAX = 16;
@@ -43,7 +45,7 @@ module Aaps {
         return busy || stopping;
     }
 
-    // The stored control key, or null when none (or a too short one) is stored;
+    // The stored remote PIN, or null when none (or a too short one) is stored;
     // then the widget opens on key entry instead of sending anything.
     function key() as String? {
         var k = Application.Storage.getValue(KEY_STORAGE);

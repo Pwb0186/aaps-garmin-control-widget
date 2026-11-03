@@ -2,13 +2,13 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Entry of the AAPS control key on the watch. The key is kept in
+// Entry of the AAPS remote PIN on the watch. The key is kept in
 // Application.Storage (see Aaps.key), so it is never in the source or in the
 // .prg, and a built .prg can be shared. Digits only: with UP/DOWN/START a digit
 // is a few presses away, while letters would need a long cycle per character.
 //
 // Shown when the widget opens without a stored key, and from the menu's
-// "Control key" item; it always starts empty, so a new key replaces the old
+// "Remote PIN" item; it always starts empty, so a new key replaces the old
 // one only when it is saved.
 class KeyView extends WatchUi.View {
     // Position 10 of the UP/DOWN cycle is "save", drawn as a check mark. It is

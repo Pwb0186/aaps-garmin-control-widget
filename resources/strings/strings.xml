@@ -61,12 +61,12 @@
          The code is appended on a new line in BolusFlow.mc. -->
     <string id="UnknownBolus">Unknown – do NOT repeat. Check AAPS and pump.</string>
 
-    <!-- 401 and 403 name the control key, which is set in the main menu. -->
-    <string id="WrongKey">Wrong control key - change it in the menu</string>
-    <!-- 403: no (or too short) command key in AAPS. -->
-    <string id="NoKeyInAaps">No control key set in AAPS</string>
-    <!-- 429: AAPS blocks commands for 15 min after 5 wrong keys. -->
-    <string id="Locked">AAPS locked after wrong keys, try later</string>
+    <!-- 401 and 403 name the remote PIN, which is set in the main menu. -->
+    <string id="WrongKey">Wrong remote PIN - change it in the menu</string>
+    <!-- 403: no (or too short) Garmin remote control PIN in AAPS. -->
+    <string id="NoKeyInAaps">No remote PIN set in AAPS</string>
+    <!-- 429: AAPS blocks commands for 15 min after 5 wrong PINs. -->
+    <string id="Locked">AAPS locked after wrong PINs, try later</string>
     <string id="NoPhone">No phone</string>
     <string id="NoAnswer">AAPS not answering (Garmin plugin/HTTP server?)</string>
     <!-- The code is appended in Aaps.mc: "Error 404". -->
@@ -75,10 +75,10 @@
     <!-- Shown until BACK when a TT or scene commit got no clear answer.
          The code is appended on a new line in ConfirmFlow.mc. -->
     <string id="UnknownCheck">Unknown – check AAPS</string>
-    <!-- Key entry: the AAPS "Garmin watch control key", digits only. ControlKey is
+    <!-- Key entry: the AAPS "Garmin remote control PIN", digits only. ControlKey is
          also the main menu item. KeyHintSave is shown from 8 digits on, when the
          UP/DOWN cycle also has the save check mark; KeyMax at 16 digits. -->
-    <string id="ControlKey">Control key</string>
+    <string id="ControlKey">Remote PIN</string>
     <string id="KeyLength">8-16 digits</string>
     <string id="KeyHint">UP/DOWN = 0-9</string>
     <string id="KeyHintSave">UP/DOWN = 0-9 or save</string>

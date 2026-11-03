@@ -45,12 +45,12 @@ Forerunner 955 in the Connect IQ simulator.
   [`GarminPush+Steps+Control-V4.0.0`](https://github.com/Pwb0186/AndroidAPS/tree/GarminPush+Steps+Control-V4.0.0)**
   (on AAPS 4.0.0). Stock AAPS has no watch commands.
 - In AAPS: the **Garmin** plugin enabled with **Local HTTP server** on (port `28891`).
-- In AAPS' Garmin settings, a **Garmin watch control key** of **8-16 digits**. Use digits
+- In AAPS' Garmin settings, a **Garmin remote control PIN** of **8-16 digits**. Use digits
   only, because the watch can only type digits. AAPS needs at least 8 characters.
-  That key alone unlocks temp targets and scenes. Carbs and bolus (Quick Wizard, bolus
+  That PIN alone unlocks temp targets and scenes. Carbs and bolus (Quick Wizard, bolus
   wizard, treatment) also need **Allow carbs and bolus from Garmin watch**. This setting is
   off by default.
-- The same key, typed in on the watch. See [Control key](#control-key).
+- The same PIN, typed in on the watch. See [Remote PIN](#remote-pin).
 - A supported watch with Connect IQ API level 5 (`minSdkVersion` 5.0.0). See
   [Supported watches](#supported-watches). Built with Connect IQ SDK 9.2.0.
 
@@ -115,26 +115,26 @@ It should work the same way on the other watches, but this has not been checked.
 
 ---
 
-## Control key
+## Remote PIN
 
-The first time the widget opens, it asks for the control key. Type the same numeric code
-(8-16 digits) that is set as **Garmin watch control key** in AAPS.
+The first time the widget opens, it asks for the remote PIN. Type the same numeric code
+(8-16 digits) that is set as **Garmin remote control PIN** in AAPS.
 
 - UP/DOWN change the current digit (0-9, in a loop). START adds the digit and starts the
   next digit at 0.
 - From 8 digits on, the UP/DOWN cycle also has a green check mark after 9. START on it
-  saves the key and opens the menu. At 16 digits only the check mark is left.
-- BACK deletes the last digit. BACK with no digits leaves without saving. If a key is
+  saves the PIN and opens the menu. At 16 digits only the check mark is left.
+- BACK deletes the last digit. BACK with no digits leaves without saving. If a PIN is
   already stored, you go back to the menu. If not, the widget closes.
 - Only the last 4 digits are shown in clear, the rest as `*`.
 
-To change it later, choose **Control key** at the bottom of the main menu. The entry
-starts empty. The old key is kept until the new one is saved. If a command shows
-"Wrong control key" or "No control key set in AAPS", check the key in AAPS and on the
+To change it later, choose **Remote PIN** at the bottom of the main menu. The entry
+starts empty. The old PIN is kept until the new one is saved. If a command shows
+"Wrong remote PIN" or "No remote PIN set in AAPS", check the PIN in AAPS and on the
 watch.
 
-The key is stored only on the watch, in the widget's storage. It is never in the source or
-in the `.prg`. Deleting the widget from the watch deletes the key.
+The PIN is stored only on the watch, in the widget's storage. It is never in the source or
+in the `.prg`. Deleting the widget from the watch deletes the PIN.
 
 No ready-built `.prg` is published. Build the widget yourself, so you know what runs on
 your watch. See [Build and install](#build-and-install).
@@ -172,7 +172,7 @@ AAPS still refuses anything that no longer applies.
    what will really be given. Shown only when carbs and bolus are allowed from the watch.
 6. **Stop bolus** - always shown, always the last command. One press sends it at once,
    even while another request is still waiting for an answer.
-7. **Control key** - type in a new control key (see [Control key](#control-key)).
+7. **Remote PIN** - type in a new remote PIN (see [Remote PIN](#remote-pin)).
 
 BACK goes one level up; BACK in the main menu leaves the widget.
 
@@ -215,8 +215,8 @@ the STOP screen without them.
 
 ## Unknown results
 
-Only clear refusals count as "nothing was done": a wrong or missing key, a lock after
-wrong keys, or a plain error from AAPS (`ok:false` that is not marked `unknown`). These are
+Only clear refusals count as "nothing was done": a wrong or missing PIN, a lock after
+wrong PINs, or a plain error from AAPS (`ok:false` that is not marked `unknown`). These are
 shown as an error, and you can choose again. Anything else after a commit is treated as
 unknown. This includes a timeout, a lost connection or an unclear answer. Then the widget
 shows **"Unknown - do NOT repeat. Check AAPS and pump."** (with vibration, for a bolus) or
@@ -240,7 +240,7 @@ the menu and music controls. So there is no hold-to-repeat.
 
 Requirements: Connect IQ SDK and a Connect IQ developer key. To make a key, use
 "Generate a Developer Key" in SDK Manager or VS Code. No key file is needed, because the
-control key is typed in on the watch.
+remote PIN is typed in on the watch.
 
 **Command line**, from the repository root:
 
@@ -253,7 +253,7 @@ When you build it yourself, you can give it your own app id in `manifest.xml`. T
 optional.
 
 `-r` makes a release build. Leave it out for a debug build. A debug build logs requests to
-`GARMIN\APPS\LOGS\AAPSCONTROL.TXT`, if that file exists on the watch. It never logs the key.
+`GARMIN\APPS\LOGS\AAPSCONTROL.TXT`, if that file exists on the watch. It never logs the PIN.
 
 **Install (sideload):** connect the watch by USB and copy `bin/AapsControl.prg` to
 `GARMIN\APPS`. Then add the widget to the glance list on the watch. It shows as "AAPS".
@@ -284,7 +284,7 @@ The icons come from [AndroidAPS](https://github.com/nightscout/AndroidAPS) (AGPL
 They are the AAPS app icon, the temp target, Quick Wizard, calculator, automation, bolus
 and meal type icons, and the Wear treatment icon. They were converted to 40 px PNGs for the
 watch.
-The control key icon is the "key" icon from Google's
+The remote PIN icon is the "key" icon from Google's
 [Material Symbols](https://github.com/google/material-design-icons) (Apache-2.0).
 
 This repository includes those icons. So it is licensed under the GNU Affero General
