@@ -13,7 +13,8 @@ import Toybox.WatchUi;
 // insulin is given, so one START press confirms it and there is no stop screen.
 //
 // View stack: main menu, then the Quick Wizard list, the carbs picker (the
-// meal type menu) and the carb time and percentage pickers, or the treatment
+// meal type menu), the carb time picker, the meal alarm menu (only for a
+// carb time later than now) and the percentage picker, or the treatment
 // insulin and carbs pickers, then the status/confirm/stop screens, which
 // replace each other on top.
 class BolusFlow {
@@ -101,6 +102,8 @@ class BolusFlow {
     private var _wizardCarbs as Number = 0;
     private var _mealType as String?;
     private var _carbTime as Number = 0;
+    // Only true when the meal alarm menu was shown and On was chosen.
+    private var _alarm as Boolean = false;
     private var _wizardPercent as Number = DEFAULT_PERCENT;
 
     // ---- Entry
@@ -260,11 +263,35 @@ class BolusFlow {
         showAmount(view, true);
     }
 
+    // A carb time later than now gets the meal alarm menu, like the alarm
+    // check box in AAPS' bolus wizard, which only matters for a later meal.
+    // On is first, so START keeps AAPS' own default (alarm on). The choice is
+    // not remembered, like the meal type: every bolus starts on AAPS' defaults.
     private function carbTimeChosen(carbTime as Number) as Void {
         if (Aaps.busy) {
             return;
         }
         _carbTime = carbTime;
+        _alarm = false;
+        if (carbTime > 0) {
+            var menu = new WatchUi.Menu2({:title => Aaps.str(Rez.Strings.MealAlarm)});
+            menu.addItem(new WatchUi.MenuItem(Aaps.str(Rez.Strings.AlarmOn), Aaps.str(Rez.Strings.AlarmOnSub), :on, null));
+            menu.addItem(new WatchUi.MenuItem(Aaps.str(Rez.Strings.AlarmOff), null, :off, null));
+            WatchUi.pushView(menu, new AlarmMenuDelegate(self), WatchUi.SLIDE_LEFT);
+            return;
+        }
+        showPercent();
+    }
+
+    function alarmChosen(on as Boolean) as Void {
+        if (Aaps.busy) {
+            return;
+        }
+        _alarm = on;
+        showPercent();
+    }
+
+    private function showPercent() as Void {
         var view = new AmountView(false, PERCENT_MAX, PERCENT_STEP, null);
         view.setWhole(Rez.Strings.Percentage, null, "%", PERCENT_MIN, _wizardPercent);
         showAmount(view, true);
@@ -275,12 +302,15 @@ class BolusFlow {
             return;
         }
         var type = _mealType;
-        // Carbs, carb time and percentage screens, and the meal type menu
-        // when there are carbs, are removed after a bolus.
-        _below = type == null ? 3 : 4;
+        // Carbs, carb time and percentage screens, the meal type menu when
+        // there are carbs and the meal alarm menu for a later carb time, are
+        // removed after a bolus.
+        _below = 3 + (type == null ? 0 : 1) + (_carbTime > 0 ? 1 : 0);
         pushStatus(Rez.Strings.Loading);
+        // alarm is always sent, so AAPS never has to guess; older AAPS
+        // versions ignore it and set no alarm.
         var params = {"carbs" => _wizardCarbs.toString(), "carbTime" => _carbTime.toString(),
-            "percent" => percent.toString()} as Dictionary<Object, Object>;
+            "percent" => percent.toString(), "alarm" => (_alarm ? "1" : "0")} as Dictionary<Object, Object>;
         if (type != null) {
             params["type"] = type;
         }
@@ -790,5 +820,19 @@ class MealMenuDelegate extends WatchUi.Menu2InputDelegate {
     // The item id is the meal type AAPS expects, so no mapping is needed.
     function onSelect(item as WatchUi.MenuItem) as Void {
         _flow.mealChosen(item.getId() as String);
+    }
+}
+
+// BACK is left to Menu2's default, which returns to the carb time screen.
+class AlarmMenuDelegate extends WatchUi.Menu2InputDelegate {
+    private var _flow as BolusFlow;
+
+    function initialize(flow as BolusFlow) {
+        Menu2InputDelegate.initialize();
+        _flow = flow;
+    }
+
+    function onSelect(item as WatchUi.MenuItem) as Void {
+        _flow.alarmChosen(item.getId() == :on);
     }
 }

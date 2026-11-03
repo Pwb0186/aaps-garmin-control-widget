@@ -160,9 +160,14 @@ AAPS still refuses anything that no longer applies.
 4. **Bolus wizard** - the same steps as AAPS' bolus wizard. First carbs (0-200 g in 5 g
    steps). Then meal type **Bread / Cake / Pizza**. Cake and pizza give part of the carbs
    as extended carbs, like in AAPS. This step is skipped at 0 g. Then **carb time** (-60 to
-   +60 min in 5 min steps, starting at 0; + = eat later). Last **percentage** (10-200 % in
-   5 % steps, starting at AAPS' default). START moves on and BACK goes back one screen. So
-   if you press START all the way, you get AAPS' defaults. If AAPS refuses the calculation
+   +60 min in 5 min steps, starting at 0; + = eat later). If the carb time is later than
+   now, **Meal alarm** follows: **On** (the default, like in AAPS) or **Off**. With On, AAPS
+   sets an alarm for when it is time to eat. This step is skipped at 0 min or less, and then
+   no alarm is set. The alarm needs AAPS from the fork branch
+   `GarminPush+Steps+Control-V4.0.0` with this change. Older AAPS versions ignore it and set
+   no alarm. Last **percentage** (10-200 % in 5 % steps, starting at AAPS' default). START
+   moves on and BACK goes back one screen. So if you press START all the way, you get AAPS'
+   defaults. If AAPS refuses the calculation
    (for example "No insulin required"), its message is shown and the widget returns to the
    main menu. Shown only when bolus is allowed from the watch.
 5. **Treatment** - first insulin, then carbs. Insulin is light blue and uses the pump's

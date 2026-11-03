@@ -53,6 +53,11 @@
     <!-- Bolus wizard after the meal type: minutes until the meal, as in AAPS. -->
     <string id="CarbTime">Carb time</string>
     <string id="CarbTimeSub">+ = eat later</string>
+    <!-- Shown after a carb time later than now: AAPS can alarm when it is time to eat. -->
+    <string id="MealAlarm">Meal alarm</string>
+    <string id="AlarmOn">On</string>
+    <string id="AlarmOnSub">Alarm at meal time</string>
+    <string id="AlarmOff">Off</string>
     <string id="Percentage">Percentage</string>
     <string id="HoldStart">Hold START 2 s</string>
     <string id="StopQuestion">Stop bolus?</string>
