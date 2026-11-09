@@ -217,6 +217,7 @@ The ring and the amount only move as far as the pump reports progress to AAPS. S
 only report at the end. They also need AAPS from the fork branch
 `GarminPush+Steps+Control-V4.0.0` with this change. Older AAPS versions (and SMBs) show
 the STOP screen without them.
+If AAPS also sends `bolusDelivered` (in U), the screen shows that amount; otherwise it is worked out from the percent.
 
 ## Unknown results
 

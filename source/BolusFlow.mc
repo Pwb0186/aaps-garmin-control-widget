@@ -670,7 +670,7 @@ class BolusFlow {
         if (percent instanceof Number && percent >= 0 && percent <= 100 && Aaps.isNumeric(insulin)) {
             // Whole hundredths, like the treatment picker, so the text is exact.
             var total = ((insulin as Numeric).toFloat() * 100 + 0.5f).toNumber();
-            view.setProgress(total > 0 ? percent : null, total, delivered(insulin as Numeric, percent, d["bolusStep"], total));
+            view.setProgress(total > 0 ? percent : null, total, delivered(insulin as Numeric, percent, d["bolusStep"], total, d["bolusDelivered"]));
         } else {
             view.setProgress(null, 0, 0);
         }
@@ -679,9 +679,13 @@ class BolusFlow {
     // The delivered amount in hundredths. AAPS sends whole percent, so total x
     // percent gives amounts like 0.03 U that the pump never gives; rounded to
     // the pump's step (bolusStep, in the same answer) it moves like the pump.
-    // Thousandths for the rounding, so 0.025 U steps work too.
-    private function delivered(insulin as Numeric, percent as Number, step as Object?, total as Number) as Number {
+    // Thousandths for the rounding, so 0.025 U steps work too. Newer AAPS also
+    // sends the real amount (bolusDelivered, U); then the percent is not used for it.
+    private function delivered(insulin as Numeric, percent as Number, step as Object?, total as Number, given as Object?) as Number {
         var milli = (insulin.toFloat() * 1000 + 0.5f).toNumber() * percent / 100;
+        if (given instanceof Number || given instanceof Float || given instanceof Double) {
+            milli = ((given as Numeric).toFloat() * 1000 + 0.5f).toNumber();
+        }
         if (Aaps.isNumeric(step)) {
             var s = ((step as Numeric).toFloat() * 1000 + 0.5f).toNumber();
             if (s > 0) {
