@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.WatchUi;
 
 // Amount picker for carbs (bolus wizard, treatment) and insulin (treatment),
@@ -121,19 +122,20 @@ class AmountView extends WatchUi.View {
         var main = color != null ? color : Graphics.COLOR_WHITE;
         dc.setColor(main, Graphics.COLOR_BLACK);
         dc.clear();
-        if (color != null) {
-            dc.setPenWidth(4);
-            dc.drawCircle(w / 2, h / 2, (w < h ? w : h) / 2 - 3);
-            dc.setPenWidth(1);
-        }
+        // The keys are named on bands at the edge (no ring: it would run into them).
+        KeyBands.start(dc, Aaps.str(Rez.Strings.NextLabel), KeyBands.START_COLOR);
+        KeyBands.back(dc, Aaps.str(Rez.Strings.BackLabel));
+        KeyBands.upDown(dc);
+        dc.setColor(main, Graphics.COLOR_TRANSPARENT);
         var title = _title;
-        dc.drawText(w / 2, h * 0.17, Graphics.FONT_SMALL,
+        // Low enough that a long title stays clear of the START band.
+        dc.drawText(w / 2, h * 0.21, Graphics.FONT_SMALL,
             Aaps.str(title != null ? title : (_insulin ? Rez.Strings.Insulin : Rez.Strings.Carbs)),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         var sub = _sub;
         if (sub != null) {
             dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(w / 2, h * 0.28, Graphics.FONT_XTINY, sub,
+            dc.drawText(w / 2, h * 0.31, Graphics.FONT_XTINY, sub,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             dc.setColor(main, Graphics.COLOR_TRANSPARENT);
         }
@@ -152,12 +154,6 @@ class AmountView extends WatchUi.View {
             hint = Lang.format(Aaps.str(Rez.Strings.AmountHint), [stepText(1)]);
         }
         dc.drawText(w / 2, h * 0.70, Graphics.FONT_XTINY, hint,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h * 0.80, Graphics.FONT_XTINY, Aaps.str(Rez.Strings.CarbsNext),
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h * 0.89, Graphics.FONT_XTINY, Aaps.str(Rez.Strings.ConfirmBack),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -304,25 +300,7 @@ class BolusConfirmView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
 
-        // Same text box as the TT confirm screen: it stays inside the circle
-        // and inside the ring, TINY preferred and XTINY cut with "..." if needed.
-        var boxW = w * 0.65;
-        var boxH = h * 0.60;
-        var font = Graphics.FONT_TINY;
-        var text = Graphics.fitTextToArea(_text, font, boxW, boxH, false);
-        if (text == null) {
-            font = Graphics.FONT_XTINY;
-            text = Graphics.fitTextToArea(_text, font, boxW, boxH, true);
-        }
-        dc.drawText(w / 2, h * 0.12 + boxH / 2, font, text == null ? "" : text,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-
-        dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h * 0.78, Graphics.FONT_XTINY, Aaps.str(Rez.Strings.HoldStart),
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h * 0.87, Graphics.FONT_XTINY, Aaps.str(Rez.Strings.ConfirmBack),
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        drawConfirmText(dc, _text);
 
         if (_progress > 0.0f) {
             var pen = 8;
@@ -345,6 +323,9 @@ class BolusConfirmView extends WatchUi.View {
             }
             dc.setPenWidth(1);
         }
+        // Over the hold ring, so the key names stay readable while it fills.
+        KeyBands.start(dc, Aaps.str(Rez.Strings.HoldLabel), KeyBands.START_COLOR);
+        KeyBands.back(dc, Aaps.str(Rez.Strings.CancelLabel));
     }
 }
 
@@ -427,68 +408,89 @@ class StopView extends WatchUi.View {
         WatchUi.requestUpdate();
     }
 
+    // The bolus is done: the ring full and the whole dose as given, like AAPS'
+    // dialog at its end. Without a known dose nothing changes.
+    function showDone() as Void {
+        if (_total > 0) {
+            _percent = 100;
+            _delivered = _total;
+        }
+        WatchUi.requestUpdate();
+    }
+
     // Hundredths as "1.25": AAPS' progress is shown to two decimals, which is
     // enough for a readout, also with 0.025 U pump steps.
     private function amountText(value as Number) as String {
         return (value / 100).toString() + Aaps.str(Rez.Strings.DecimalSep) + (value % 100).format("%02d");
     }
 
+    // The screen as AAPS' own bolus dialog: lilac progress ring with "Going to
+    // deliver" / "Delivering", and the two keys named on bands at the edge next to
+    // them: a red STOP band at START (upper right) and a grey CLOSE band at BACK
+    // (lower right), so it is clear which key stops the bolus. Sizes are for the
+    // 260 px fr955 screen and scaled to the screen width.
+    private const RING_COLOR = 0xAAAAFF; // nearest to AAPS' #CFBCFF on the fr955 palette
+    private const CLOSE_COLOR = 0x555555;
+
     function onUpdate(dc as Graphics.Dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
+        var cx = w / 2;
+        var cy = h / 2;
+        var s = w / 260.0;
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
-        var error = _error;
+
+        KeyBands.start(dc, Aaps.str(Rez.Strings.StopLabel), KeyBands.STOP_COLOR);
+        KeyBands.back(dc, Aaps.str(Rez.Strings.CloseLabel));
+
         var percent = _percent;
-        if (error != null) {
-            // The circle is narrow this high up; 60% x 16% stays inside it.
-            dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
-            var text = Graphics.fitTextToArea(error, Graphics.FONT_XTINY, w * 0.60, h * 0.16, true);
-            dc.drawText(w / 2, h * 0.16, Graphics.FONT_XTINY, text == null ? "" : text,
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        } else if (percent != null) {
-            // In place of the check mark: there is no room between the STOP
-            // circle and the lines below it, and a growing amount says just as
-            // clearly that the bolus went through. An error still wins the top.
-            dc.setColor(_color, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(w / 2, h * 0.16, Graphics.FONT_XTINY,
-                amountText(_delivered) + " / " + amountText(_total) + " " + Aaps.str(Rez.Strings.InsulinUnit),
-                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        } else if (_sent) {
-            drawCheck(dc, w / 2, (h * 0.15).toNumber(), (w * 0.14).toNumber());
-        }
-
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(w / 2, h / 2, w * 0.24);
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h / 2, Graphics.FONT_MEDIUM, "STOP",
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-
-        dc.drawText(w / 2, h * 0.80, Graphics.FONT_TINY, Aaps.str(Rez.Strings.StopQuestion),
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h * 0.90, Graphics.FONT_XTINY, Aaps.str(Rez.Strings.StopStart),
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-
-        // Drawn like the hold ring on the confirm screen.
+        var r = (94 * s).toNumber();
+        var pen = (7 * s).toNumber();
+        dc.setPenWidth(pen);
+        dc.setColor(CLOSE_COLOR, Graphics.COLOR_TRANSPARENT);
+        dc.drawCircle(cx, cy, r);
+        // Clockwise from 12 o'clock; drawArc wants 0..360.
         if (percent != null && percent > 0) {
-            var pen = 8;
-            dc.setPenWidth(pen);
-            dc.setColor(_color, Graphics.COLOR_TRANSPARENT);
-            var r = (w < h ? w : h) / 2 - pen / 2 - 1;
+            dc.setColor(RING_COLOR, Graphics.COLOR_TRANSPARENT);
             if (percent >= 100) {
-                dc.drawCircle(w / 2, h / 2, r);
+                dc.drawCircle(cx, cy, r);
             } else {
-                // Clockwise from 12 o'clock; drawArc wants 0..360.
                 var end = 90 - 360 * percent / 100;
                 if (end < 0) {
                     end += 360;
                 }
-                dc.drawArc(w / 2, h / 2, r, Graphics.ARC_CLOCKWISE, 90, end);
+                dc.drawArc(cx, cy, r, Graphics.ARC_CLOCKWISE, 90, end);
             }
-            dc.setPenWidth(1);
+        }
+        dc.setPenWidth(1);
+
+        var error = _error;
+        if (error != null) {
+            // Inside the ring, above the lines; an error wins over the check mark.
+            dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+            var text = Graphics.fitTextToArea(error, Graphics.FONT_XTINY, w * 0.52, h * 0.14, true);
+            dc.drawText(cx, h * 0.30, Graphics.FONT_XTINY, text == null ? "" : text,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        } else if (_sent && percent == null) {
+            drawCheck(dc, cx, (h * 0.30).toNumber(), (w * 0.12).toNumber());
+        }
+
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        if (percent != null) {
+            // The same words as AAPS' bolus dialog ("Going to deliver 0.05 U",
+            // "Delivering 0.05U"), the total on its own line to fit the ring.
+            dc.drawText(cx, h * 0.42, Graphics.FONT_XTINY, Aaps.str(Rez.Strings.GoingToDeliver),
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            dc.drawText(cx, h * 0.52, Graphics.FONT_SMALL,
+                amountText(_total) + " " + Aaps.str(Rez.Strings.InsulinUnit),
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            dc.drawText(cx, h * 0.63, Graphics.FONT_XTINY,
+                Aaps.str(Rez.Strings.Delivering) + " " + amountText(_delivered) + Aaps.str(Rez.Strings.InsulinUnit),
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
+
 }
 
 // Through StartKeyDelegate, so the release that ends the 2 s hold on the

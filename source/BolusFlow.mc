@@ -36,6 +36,8 @@ class BolusFlow {
     // single "not running" does not close the stop screen; "not running" must
     // hold for this long.
     private const UNKNOWN_IDLE_MS = 30000;
+    // How long the full ring stays up when the bolus is done, so the end is seen.
+    private const DONE_MS = 2000;
     // Nearest fr955 palette colours to the AAPS night theme insulin (0xFF67DFE8)
     // and carbs (0xFFFFAE01) colours.
     private const INSULIN_COLOR = 0x55FFFF;
@@ -91,6 +93,9 @@ class BolusFlow {
     // view below the carbs screen then). _carbsOnly is set by every prepare
     // answer: true when no insulin will be given.
     private var _insulin as Number = 0;
+    // The dose of the prepared bolus in hundredths (AAPS' "insulin"), so the stop
+    // screen can show "Going to deliver" at once, before AAPS reports progress.
+    private var _dose as Number = 0;
     private var _maxInsulin as Number = DEFAULT_MAX_INSULIN;
     private var _insulinStep as Number = DEFAULT_INSULIN_STEP;
     private var _maxCarbs as Number = DEFAULT_MAX_CARBS;
@@ -134,12 +139,13 @@ class BolusFlow {
     }
 
     // Without a usable answer the flow goes on as normal; AAPS itself refuses
-    // a new bolus while one is running.
+    // a new bolus while one is running. An SMB from the loop does not open the
+    // stop screen: it is over in seconds, before the dose is chosen.
     function onEntryStatus(code as Number, data as Dictionary or String or Null) as Void {
         Aaps.busy = false;
         Aaps.log("entry status " + code);
         var ok = Aaps.isOk(code, data);
-        if (ok && (data as Dictionary)["bolusRunning"] == true) {
+        if (ok && (data as Dictionary)["bolusRunning"] == true && (data as Dictionary)["smbRunning"] != true) {
             showStop(false, null);
             showProgress(data as Dictionary);
         } else if (_entry == ENTRY_QW) {
@@ -237,7 +243,7 @@ class BolusFlow {
             mealChosen(null);
             return;
         }
-        // Bread first, so pressing START straight through gives the plain wizard (all carbs now).
+        // Bread first, so START keeps the plain wizard as before.
         var menu = new WatchUi.Menu2({:title => carbs + " g"});
         menu.addItem(mealItem(Rez.Strings.Bread, Rez.Strings.BreadSub, "bread", Rez.Drawables.MealBread));
         menu.addItem(mealItem(Rez.Strings.Cake, Rez.Strings.CakeSub, "cake", Rez.Drawables.MealCake));
@@ -275,7 +281,7 @@ class BolusFlow {
         _alarm = false;
         if (carbTime > 0) {
             var menu = new WatchUi.Menu2({:title => Aaps.str(Rez.Strings.MealAlarm)});
-            menu.addItem(new WatchUi.MenuItem(Aaps.str(Rez.Strings.AlarmOn), Aaps.str(Rez.Strings.AlarmOnSub), :on, null));
+            menu.addItem(new WatchUi.MenuItem(Aaps.str(Rez.Strings.AlarmOn), null, :on, null));
             menu.addItem(new WatchUi.MenuItem(Aaps.str(Rez.Strings.AlarmOff), null, :off, null));
             WatchUi.pushView(menu, new AlarmMenuDelegate(self), WatchUi.SLIDE_LEFT);
             return;
@@ -419,8 +425,10 @@ class BolusFlow {
             // 0 takes the one-press way; without the field a treatment with no
             // insulin chosen is still carbs only, anything else needs the hold.
             var dose = (data as Dictionary)["insulin"];
+            _dose = 0;
             if (Aaps.isNumeric(dose)) {
                 _carbsOnly = (dose as Numeric).toFloat() == 0.0f;
+                _dose = ((dose as Numeric).toFloat() * 100 + 0.5f).toNumber();
             } else {
                 _carbsOnly = _entry == ENTRY_TREATMENT && _insulin == 0;
             }
@@ -521,6 +529,10 @@ class BolusFlow {
                 showDone(null);
             } else {
                 showStop(true, null);
+                var view = _stop;
+                if (view != null && _dose > 0) {
+                    view.setProgress(0, _dose, 0);
+                }
             }
             return;
         }
@@ -648,7 +660,7 @@ class BolusFlow {
                 _idleSince = now;
             }
             if (!_unknown || now - (_idleSince as Number) >= UNKNOWN_IDLE_MS) {
-                close();
+                finishStop();
             }
         } else if (Aaps.isOk(code, data)) {
             // Running again: the wait for a lasting "not running" starts over.
@@ -671,9 +683,9 @@ class BolusFlow {
             // Whole hundredths, like the treatment picker, so the text is exact.
             var total = ((insulin as Numeric).toFloat() * 100 + 0.5f).toNumber();
             view.setProgress(total > 0 ? percent : null, total, delivered(insulin as Numeric, percent, d["bolusStep"], total, d["bolusDelivered"]));
-        } else {
-            view.setProgress(null, 0, 0);
         }
+        // Without progress in this answer the screen keeps what it shows: the
+        // dose from the commit before the pump starts, the last progress after.
     }
 
     // The delivered amount in hundredths. AAPS sends whole percent, so total x
@@ -717,7 +729,7 @@ class BolusFlow {
         Aaps.log("bolus stop " + code);
         var text = Aaps.isOk(code, data) ? (data as Dictionary)["text"] : null;
         if (text instanceof String && text.length() > 0) {
-            if (text.equals("Bolus stopped")) {
+            if (text.equals("Stop sent")) {
                 // Only a stop that hit a running bolus gets the check mark;
                 // "No bolus running" is information, not a done action.
                 showDone(text);
@@ -740,6 +752,18 @@ class BolusFlow {
 
     // Ends every screen of this flow. Normally one step back; after a bolus
     // that may have been given, back to the main menu.
+    // The bolus is done: polling stops (so START does nothing any more), the ring
+    // is shown full for DONE_MS, then the screen closes. BACK still closes at once.
+    private function finishStop() as Void {
+        _polling = false;
+        _timer.stop();
+        var view = _stop;
+        if (view != null) {
+            view.showDone();
+        }
+        _timer.start(method(:close), DONE_MS, false);
+    }
+
     function close() as Void {
         _timer.stop();
         _polling = false;

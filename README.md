@@ -8,6 +8,7 @@ A Connect IQ widget for Garmin watches. It sends commands to AndroidAPS (AAPS): 
 target, scenes, Quick Wizard, bolus wizard, treatment (insulin and/or carbs) and stop bolus.
 It talks to the local HTTP server of the AAPS Garmin plugin.
 The watch needs a round display of 260x260 or larger and START, BACK, UP and DOWN buttons.
+The widget is called **AAPS Control**.
 See [Supported watches](#supported-watches).
 
 The widget never computes a dose. Every command has two steps. First the widget asks AAPS
@@ -25,16 +26,21 @@ Forerunner 955 in the Connect IQ simulator.
 <tr>
 <td><img src="AapsControl.png" width="200" alt="Main menu"><br>Main menu</td>
 <td><img src="AapsControl1.png" width="200" alt="Main menu, lower part"><br>Main menu, lower part</td>
-<td><img src="AapsControl8.png" width="200" alt="Temp target menu"><br>Temp target menu</td>
+<td><img src="AapsControl2.png" width="200" alt="Temp target menu"><br>Temp target menu</td>
 </tr>
 <tr>
-<td><img src="AapsControl3.png" width="200" alt="Bolus wizard: carbs"><br>Bolus wizard: carbs</td>
-<td><img src="AapsControl4.png" width="200" alt="Bolus wizard: meal type"><br>Bolus wizard: meal type</td>
+<td><img src="AapsControl3.png" width="200" alt="Temp target: AAPS confirmation"><br>Temp target: AAPS confirmation</td>
+<td><img src="AapsControl4.png" width="200" alt="Bolus wizard: carbs"><br>Bolus wizard: carbs</td>
 <td><img src="AapsControl5.png" width="200" alt="Bolus wizard: carb time"><br>Bolus wizard: carb time</td>
 </tr>
 <tr>
-<td><img src="AapsControl6.png" width="200" alt="AAPS confirmation, hold START 2 s"><br>AAPS confirmation, hold START 2 s</td>
-<td><img src="AapsControl7.png" width="200" alt="Stop screen with bolus progress ring"><br>Stop screen with bolus progress ring</td>
+<td><img src="AapsControl6.png" width="200" alt="&quot;Time to eat&quot; alarm"><br>&quot;Time to eat&quot; alarm</td>
+<td><img src="AapsControl7.png" width="200" alt="Bolus wizard: percentage"><br>Bolus wizard: percentage</td>
+<td><img src="AapsControl8.png" width="200" alt="AAPS confirmation, hold START 2 s"><br>AAPS confirmation, hold START 2 s</td>
+</tr>
+<tr>
+<td><img src="AapsControl9.png" width="200" alt="Stop screen with bolus progress"><br>Stop screen with bolus progress</td>
+<td></td>
 <td></td>
 </tr>
 </table>
@@ -161,11 +167,11 @@ AAPS still refuses anything that no longer applies.
    steps). Then meal type **Bread / Cake / Pizza**. Cake and pizza give part of the carbs
    as extended carbs, like in AAPS. This step is skipped at 0 g. Then **carb time** (-60 to
    +60 min in 5 min steps, starting at 0; + = eat later). If the carb time is later than
-   now, **Meal alarm** follows: **On** (the default, like in AAPS) or **Off**. With On, AAPS
+   now, the menu **"Time to eat" alarm** follows: **On** (the default, like in AAPS) or **Off**. With On, AAPS
    sets an alarm for when it is time to eat. This step is skipped at 0 min or less, and then
    no alarm is set. The alarm needs AAPS from the fork branch
    `GarminPush+Steps+Control-V4.0.0` with this change. Older AAPS versions ignore it and set
-   no alarm. Last **percentage** (10-200 % in 5 % steps, starting at AAPS' default). START
+   no alarm. Last **percentage** (10-200 % in 5 % steps, starting at AAPS' default). NEXT (the START key)
    moves on and BACK goes back one screen. So if you press START all the way, you get AAPS'
    defaults. If AAPS refuses the calculation
    (for example "No insulin required"), its message is shown and the widget returns to the
@@ -183,37 +189,57 @@ BACK goes one level up; BACK in the main menu leaves the widget.
 
 ---
 
+## Key bands
+
+On every screen with keys, a colored band at the edge of the display shows what a key does.
+
+- At the **START** key (upper right) the band is purple. It says CONFIRM, HOLD 2 s or NEXT.
+  On the stop screen it is red and says STOP BOLUS.
+- At the **BACK** key (lower right) the band is grey. It says CANCEL, BACK or CLOSE.
+- On the pickers, a grey **+** and **-** band sits next to the UP and DOWN keys.
+
 ## Confirming
 
-- **Temp target, scene, and carbs only (0 U):** one START press on the confirm screen.
+- **Temp target, scene, and carbs only (0 U):** one press of START (band CONFIRM).
 - The confirm screen shows AAPS' own lines, with two exceptions. **End scene**: AAPS has
   no prepare step for it, so the watch asks its own question. **Stop bolus**: there is no
   confirmation at all, because stopping can never give insulin.
-- **Anything with insulin:** hold START for 2 s. A ring along the edge fills while you
-  hold, and the watch vibrates when it counts. Releasing earlier sends nothing.
+- A long AAPS line is broken at a space, never inside a `( )` group, so for example `(105%)`
+  stays whole. If it still does not fit, the text gets a smaller font.
+- **Anything with insulin:** hold START for 2 s (band HOLD 2 s). A green ring along the
+  edge fills while you hold, and the watch vibrates when it counts. Releasing earlier sends
+  nothing.
 - Only the START key confirms, and only a press that started on that screen. A press that
   was already down does not count. This can happen after a long press in the menu. Touch,
   swipes and the menu key do nothing. If something covers the confirm screen (for example
   a notification), the hold is cancelled.
-- BACK cancels. A confirm screen expires without sending anything. Insulin and carbs only
-  expire after 30 s. Temp targets and scenes expire after 60 s. This is well before AAPS
-  drops the prepared command.
+- BACK (band CANCEL) cancels. A confirm screen expires without sending anything. Insulin and
+  carbs only expire after 30 s. Temp targets and scenes expire after 60 s. This is well
+  before AAPS drops the prepared command.
 - BACK or the timeout on a bolus/carbs confirmation tells AAPS to drop the prepared dose
   (`/bolus/discard`, AAPS dev). This lets SMBs start again at once. Older AAPS ignores it.
 - A green check mark shows that AAPS accepted the command.
 
 ## After a bolus
 
-A red **STOP** screen stays while the bolus runs. The widget asks AAPS every 3 s. It closes
-the screen when AAPS says no bolus is running, or after 20 min in any case.
-START stops the bolus at once. BACK closes the screen. If a stop fails on the STOP screen,
-the error is shown there and START tries again. If **Stop bolus** fails from the main menu,
-the error is shown for 3 s and the widget returns to the menu. If you open Quick Wizard,
-bolus wizard or treatment while a bolus is running, the STOP screen is shown instead.
+The STOP screen opens at once when you confirm a bolus. It stays open while the bolus runs.
+The widget asks AAPS every 3 s. When AAPS says no bolus is running, the ring is shown full
+for 2 s and then the screen closes. It also closes after 20 min in any case.
 
-While the bolus runs, a light blue ring along the screen edge fills clockwise. The top of
-the screen shows the delivered amount, for example `1.25 / 5.00 U`, updated every 3 s.
-The ring and the amount only move as far as the pump reports progress to AAPS. Some pumps
+- START (red band **STOP BOLUS**) stops the bolus at once.
+- BACK (grey band **CLOSE**) closes the screen.
+- When AAPS has accepted the stop, a green check mark and "Stop sent" are shown.
+- If a stop fails on the STOP screen, the error is shown there and START tries again. If
+  **Stop bolus** fails from the main menu, the error is shown for 3 s and the widget returns
+  to the menu.
+- If you open Quick Wizard, bolus wizard or treatment while a bolus is running, the STOP
+  screen is shown instead.
+- An SMB (a small bolus from the loop) does not open the STOP screen. For this, AAPS must
+  send `smbRunning` in `/status`.
+
+The screen looks like the bolus dialog in AAPS. A progress ring fills clockwise. Inside the
+ring you see "Going to deliver", the total amount, and "Delivering x.xxU", updated every 3 s.
+The ring and the amounts only move as far as the pump reports progress to AAPS. Some pumps
 only report at the end. They also need AAPS from the fork branch
 `GarminPush+Steps+Control-V4.0.0` with this change. Older AAPS versions (and SMBs) show
 the STOP screen without them.
@@ -236,7 +262,8 @@ is offered, since it may be running. The widget never sends a command again by i
 
 ## Pickers
 
-UP/DOWN change the value exactly one step per press, however fast you press. So the value
+UP/DOWN change the value exactly one step per press, however fast you press. The screen
+shows the step, for example `± 5 g`, and a **+** and **-** band next to the keys. So the value
 never jumps past what you are watching. Holding UP or DOWN is used by the watch itself for
 the menu and music controls. So there is no hold-to-repeat.
 
@@ -262,7 +289,7 @@ optional.
 `GARMIN\APPS\LOGS\AAPSCONTROL.TXT`, if that file exists on the watch. It never logs the PIN.
 
 **Install (sideload):** connect the watch by USB and copy `bin/AapsControl.prg` to
-`GARMIN\APPS`. Then add the widget to the glance list on the watch. It shows as "AAPS".
+`GARMIN\APPS`. Then add the widget to the glance list on the watch. It shows as "AAPS Control".
 
 **Simulator:** the simulator has no phone. So requests fail unless the AAPS HTTP port is
 forwarded to the computer (for example `adb forward tcp:28891 tcp:28891`). Commands sent

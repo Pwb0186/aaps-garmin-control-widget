@@ -72,7 +72,7 @@ module MainMenu {
     // Stop bolus is always shown and is the last command, so it is found in the
     // same place. Remote PIN is below it: setup, not a command.
     function build(showQw as Boolean, showScenes as Boolean, showWizard as Boolean, showTreatment as Boolean) as WatchUi.Menu2 {
-        var menu = new WatchUi.Menu2({:title => "AAPS"});
+        var menu = new WatchUi.Menu2({:title => "AAPS Control"});
         menu.addItem(item(Rez.Strings.TempTarget, :tt, Rez.Drawables.MenuTt));
         if (showScenes) {
             menu.addItem(item(Rez.Strings.Scenes, :scenes, Rez.Drawables.MenuScene));

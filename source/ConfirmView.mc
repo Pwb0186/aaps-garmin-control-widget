@@ -19,29 +19,91 @@ class ConfirmView extends WatchUi.View {
     function onUpdate(dc as Graphics.Dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
-
-        // Box of 65% x 60% from 12% down stays inside the circle; TINY is
-        // preferred and XTINY (cut with "...") only when the text is too long.
-        var boxW = w * 0.65;
-        var boxH = h * 0.60;
-        var font = Graphics.FONT_TINY;
-        var text = Graphics.fitTextToArea(_text, font, boxW, boxH, false);
-        if (text == null) {
-            font = Graphics.FONT_XTINY;
-            text = Graphics.fitTextToArea(_text, font, boxW, boxH, true);
-        }
-        dc.drawText(w / 2, h * 0.12 + boxH / 2, font, text == null ? "" : text,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-
-        dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h * 0.78, Graphics.FONT_XTINY, WatchUi.loadResource(Rez.Strings.ConfirmStart) as String,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h * 0.87, Graphics.FONT_XTINY, WatchUi.loadResource(Rez.Strings.ConfirmBack) as String,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        drawConfirmText(dc, _text);
+        KeyBands.start(dc, Aaps.str(Rez.Strings.ConfirmLabel), KeyBands.START_COLOR);
+        KeyBands.back(dc, Aaps.str(Rez.Strings.CancelLabel));
     }
+}
+
+// AAPS' confirmation lines in white, in a box left of the START and BACK bands:
+// 58% x 60% around a point a little left of the centre, so its right corners
+// stay inside the bands' inner edge. AAPS' lines are kept whole when a font
+// allows it (TINY, then XTINY): a wrapped line reads worse than a smaller one.
+// Only then they are wrapped by wrapLines(), at a space and never inside "( )":
+// fitTextToArea breaks inside a word and left a lone ")" of "(105%)" behind.
+// fitTextToArea (cut with "...") is the last resort.
+function drawConfirmText(dc as Graphics.Dc, lines as String) as Void {
+    var w = dc.getWidth();
+    var h = dc.getHeight();
+    var boxW = (w * 0.58).toNumber();
+    var boxH = (h * 0.60).toNumber();
+    var font = Graphics.FONT_TINY;
+    var text = wrapLines(dc, lines, font, boxW, boxH, false);
+    if (text == null) {
+        font = Graphics.FONT_XTINY;
+        text = wrapLines(dc, lines, font, boxW, boxH, false);
+    }
+    if (text == null) {
+        font = Graphics.FONT_TINY;
+        text = wrapLines(dc, lines, font, boxW, boxH, true);
+    }
+    if (text == null) {
+        font = Graphics.FONT_XTINY;
+        text = wrapLines(dc, lines, font, boxW, boxH, true);
+    }
+    if (text == null) {
+        text = Graphics.fitTextToArea(lines, font, boxW, boxH, true);
+    }
+    dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+    dc.drawText(w * 0.46, h / 2, font, text == null ? "" : text,
+        Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+}
+
+// Wraps each line at spaces so no part is wider than boxW, or null when the
+// result is taller than boxH, a word is wider than boxW, or (wrap false) a line
+// would need wrapping. A "(...)" group counts as one word.
+function wrapLines(dc as Graphics.Dc, lines as String, font, boxW as Number, boxH as Number, wrap as Boolean) as String? {
+    var out = "";
+    var count = 0;
+    var rest = lines as String?;
+    while (rest != null) {
+        var r = rest as String;
+        var cut = r.find("\n");
+        var line = cut == null ? r : r.substring(0, cut) as String;
+        rest = cut == null ? null : r.substring(cut + 1, r.length());
+        var cur = "";
+        var words = line as String?;
+        while (words != null) {
+            var ws = words as String;
+            var sp = ws.find(" ");
+            var word = sp == null ? ws : ws.substring(0, sp) as String;
+            words = sp == null ? null : ws.substring(sp + 1, ws.length());
+            // Keep "(+10 min)" together: take words until the ")" closes it.
+            if (word.find("(") != null) {
+                while (word.find(")") == null && words != null) {
+                    var ws2 = words as String;
+                    var sp2 = ws2.find(" ");
+                    word = word + " " + (sp2 == null ? ws2 : ws2.substring(0, sp2) as String);
+                    words = sp2 == null ? null : ws2.substring(sp2 + 1, ws2.length());
+                }
+            }
+            var tryLine = cur.length() == 0 ? word : cur + " " + word;
+            if (cur.length() > 0 && dc.getTextWidthInPixels(tryLine, font) > boxW) {
+                if (!wrap) { return null; }
+                out += (count == 0 ? "" : "\n") + cur;
+                count++;
+                cur = word;
+            } else {
+                cur = tryLine;
+            }
+            if (dc.getTextWidthInPixels(cur, font) > boxW) { return null; }
+        }
+        out += (count == 0 ? "" : "\n") + cur;
+        count++;
+    }
+    return count * Graphics.getFontHeight(font) > boxH ? null : out;
 }
 
 // Base for screens where START acts (confirm, stop, carbs). START only counts

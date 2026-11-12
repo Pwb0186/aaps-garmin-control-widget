@@ -13,7 +13,7 @@ class TtGlance extends WatchUi.GlanceView {
 
     function onUpdate(dc as Graphics.Dc) as Void {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, dc.getHeight() / 2, Graphics.FONT_GLANCE, "AAPS",
+        dc.drawText(0, dc.getHeight() / 2, Graphics.FONT_GLANCE, "AAPS Control",
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 }

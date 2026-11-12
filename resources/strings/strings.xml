@@ -1,7 +1,7 @@
 <strings>
-    <string id="AppName">AAPS</string>
+    <string id="AppName">AAPS Control</string>
 
-    <!-- English is the default; the watch picks resources-dan when its language is Danish. -->
+    <!-- English only: the manifest lists only eng, so every watch language gets these texts. -->
     <string id="TempTarget">Temp target</string>
     <string id="Scenes">Scenes</string>
     <string id="QuickWizard">Quick Wizard</string>
@@ -20,7 +20,6 @@
 
     <string id="Loading">Loading...</string>
     <string id="Sending">Sending...</string>
-    <string id="ConfirmStart">START = confirm</string>
     <string id="ConfirmBack">BACK = cancel</string>
     <string id="Expired">Expired</string>
 
@@ -34,8 +33,7 @@
     <string id="NoQw">No active Quick Wizard</string>
     <string id="Carbs">Carbs</string>
     <!-- $1$ is one step: "5 g", or the pump's insulin step from AAPS ("0.05 U"). -->
-    <string id="AmountHint">UP/DOWN = $1$</string>
-    <string id="CarbsNext">START = next</string>
+    <string id="AmountHint">± $1$</string>
     <!-- Treatment: insulin is shown with two decimals; DecimalSep is the decimal
          mark between them (drawn by hand in the number, since that font has no comma). -->
     <string id="Insulin">Insulin</string>
@@ -54,14 +52,20 @@
     <string id="CarbTime">Carb time</string>
     <string id="CarbTimeSub">+ = eat later</string>
     <!-- Shown after a carb time later than now: AAPS can alarm when it is time to eat. -->
-    <string id="MealAlarm">Meal alarm</string>
+    <string id="MealAlarm">"Time to eat" alarm</string>
     <string id="AlarmOn">On</string>
-    <string id="AlarmOnSub">Alarm at meal time</string>
     <string id="AlarmOff">Off</string>
     <string id="Percentage">Percentage</string>
-    <string id="HoldStart">Hold START 2 s</string>
-    <string id="StopQuestion">Stop bolus?</string>
-    <string id="StopStart">START = stop</string>
+    <!-- STOP screen: the key names on the bands at the edge, and the words of AAPS' own bolus dialog. -->
+    <string id="StopLabel">STOP BOLUS</string>
+    <string id="ConfirmLabel">CONFIRM</string>
+    <string id="CancelLabel">CANCEL</string>
+    <string id="HoldLabel">HOLD 2 s</string>
+    <string id="NextLabel">NEXT</string>
+    <string id="BackLabel">BACK</string>
+    <string id="CloseLabel">CLOSE</string>
+    <string id="GoingToDeliver">Going to deliver</string>
+    <string id="Delivering">Delivering</string>
     <!-- Shown until BACK when a bolus commit got no clear answer: it may have been given.
          The code is appended on a new line in BolusFlow.mc. -->
     <string id="UnknownBolus">Unknown – do NOT repeat. Check AAPS and pump.</string>
