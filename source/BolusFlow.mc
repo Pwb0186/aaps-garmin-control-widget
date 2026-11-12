@@ -438,11 +438,12 @@ class BolusFlow {
                 _id = id;
                 _status = null;
                 if (_carbsOnly) {
-                    WatchUi.switchToView(new ConfirmView(Aaps.toLines(lines)), new CarbsConfirmDelegate(self), WatchUi.SLIDE_IMMEDIATE);
+                    var carbsView = new ConfirmView(Aaps.toLines(lines));
+                    WatchUi.switchToView(carbsView, new CarbsConfirmDelegate(self, carbsView), WatchUi.SLIDE_IMMEDIATE);
                 } else {
                     var view = new BolusConfirmView(Aaps.toLines(lines), method(:holdCancel));
                     _confirm = view;
-                    WatchUi.switchToView(view, new BolusConfirmDelegate(self), WatchUi.SLIDE_IMMEDIATE);
+                    WatchUi.switchToView(view, new BolusConfirmDelegate(self, view), WatchUi.SLIDE_IMMEDIATE);
                 }
                 startTimer(method(:onExpired), CONFIRM_MS);
                 return;

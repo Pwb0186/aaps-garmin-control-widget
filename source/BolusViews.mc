@@ -259,7 +259,7 @@ class AmountDelegate extends StartKeyDelegate {
 // Shows AAPS' own description of the bolus and a ring along the edge that
 // fills while START is held, so the user sees how far the hold has come.
 class BolusConfirmView extends WatchUi.View {
-    private var _text as String;
+    private var _text as ConfirmText;
     private var _progress as Float = 0.0f;
     // A bolus is only sent while this screen is on top; anything that covers
     // it (a notification, another screen) ends the hold through onHidden.
@@ -272,8 +272,13 @@ class BolusConfirmView extends WatchUi.View {
         for (var i = 0; i < lines.size(); i++) {
             text += (i == 0 ? "" : "\n") + lines[i];
         }
-        _text = text;
+        _text = new ConfirmText(text);
         _onHidden = onHidden;
+    }
+
+    // UP/DOWN only move the text; the hold is not touched.
+    function scrollText(step as Number) as Void {
+        _text.scroll(step);
     }
 
     function onShow() as Void {
@@ -300,7 +305,7 @@ class BolusConfirmView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
 
-        drawConfirmText(dc, _text);
+        _text.draw(dc);
 
         if (_progress > 0.0f) {
             var pen = 8;
@@ -335,14 +340,27 @@ class BolusConfirmView extends WatchUi.View {
 // screen hold and the menu key are all swallowed, so nothing else can confirm.
 class BolusConfirmDelegate extends WatchUi.InputDelegate {
     private var _flow as BolusFlow;
+    private var _view as BolusConfirmView;
 
-    function initialize(flow as BolusFlow) {
+    function initialize(flow as BolusFlow, view as BolusConfirmView) {
         InputDelegate.initialize();
         _flow = flow;
+        _view = view;
     }
 
+    // UP/DOWN only scroll long AAPS text. They never reach the flow, so they
+    // cannot start, restart or cancel the hold, also while START is held.
     function onKeyPressed(evt as WatchUi.KeyEvent) as Boolean {
-        if (evt.getKey() == WatchUi.KEY_ENTER) {
+        var key = evt.getKey();
+        if (key == WatchUi.KEY_UP) {
+            _view.scrollText(-1);
+            return true;
+        }
+        if (key == WatchUi.KEY_DOWN) {
+            _view.scrollText(1);
+            return true;
+        }
+        if (key == WatchUi.KEY_ENTER) {
             _flow.holdStart();
         }
         return true;
@@ -519,10 +537,16 @@ class StopDelegate extends StartKeyDelegate {
 // target; BACK cancels.
 class CarbsConfirmDelegate extends StartKeyDelegate {
     private var _flow as BolusFlow;
+    private var _view as ConfirmView;
 
-    function initialize(flow as BolusFlow) {
+    function initialize(flow as BolusFlow, view as ConfirmView) {
         StartKeyDelegate.initialize();
         _flow = flow;
+        _view = view;
+    }
+
+    function onScroll(step as Number) as Void {
+        _view.scrollText(step);
     }
 
     function onStart() as Void {

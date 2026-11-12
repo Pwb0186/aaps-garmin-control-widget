@@ -205,7 +205,9 @@ On every screen with keys, a colored band at the edge of the display shows what 
   no prepare step for it, so the watch asks its own question. **Stop bolus**: there is no
   confirmation at all, because stopping can never give insulin.
 - A long AAPS line is broken at a space, never inside a `( )` group, so for example `(105%)`
-  stays whole. If it still does not fit, the text gets a smaller font.
+  stays whole. If it still does not fit, the text gets a smaller font. If the text is still
+  longer than the screen, UP and DOWN scroll it one line at a time. Small grey triangles show
+  that there is more text. UP and DOWN never confirm or cancel anything.
 - **Anything with insulin:** hold START for 2 s (band HOLD 2 s). A green ring along the
   edge fills while you hold, and the watch vibrates when it counts. Releasing earlier sends
   nothing.

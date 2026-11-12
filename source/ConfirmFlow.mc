@@ -49,7 +49,8 @@ class ConfirmFlow {
                 // fit in a 32-bit Number, so parsing it would corrupt it.
                 _commitParams = {"id" => id};
                 _status = null;
-                WatchUi.switchToView(new ConfirmView(Aaps.toLines(lines)), new ConfirmDelegate(self), WatchUi.SLIDE_IMMEDIATE);
+                var view = new ConfirmView(Aaps.toLines(lines));
+                WatchUi.switchToView(view, new ConfirmDelegate(self, view), WatchUi.SLIDE_IMMEDIATE);
                 startTimer(method(:onExpired), CONFIRM_MS);
                 return;
             }
@@ -65,7 +66,8 @@ class ConfirmFlow {
         }
         _commitPath = commitPath;
         _commitParams = {};
-        WatchUi.pushView(new ConfirmView(lines), new ConfirmDelegate(self), WatchUi.SLIDE_IMMEDIATE);
+        var view = new ConfirmView(lines);
+        WatchUi.pushView(view, new ConfirmDelegate(self, view), WatchUi.SLIDE_IMMEDIATE);
         startTimer(method(:onExpired), CONFIRM_MS);
     }
 
